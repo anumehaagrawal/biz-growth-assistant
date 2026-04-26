@@ -13,7 +13,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { ResourceManager } from "@/components/ResourceManager";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
-  head: () => ({ meta: [{ title: "Set up your organization — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Set up your organization — Club Connect" }] }),
   component: Onboarding,
 });
 
@@ -205,14 +205,14 @@ function Onboarding() {
         </div>
 
         <Button type="submit" size="lg" className="w-full rounded-full shadow-warm" disabled={submitting}>
-          {submitting ? "Setting up..." : "Continue to Bloom"}
+          {submitting ? "Setting up..." : "Continue to Club Connect"}
         </Button>
       </form>
 
       <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-soft">
         <h2 className="font-display text-2xl text-ink">Add resources (optional)</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Drop in your website, annual report, brochures, or mission docs. Bloom will write from your real materials — not generic templates. You can add more anytime in Settings.
+          Drop in your website, annual report, brochures, or mission docs. Club Connect will write from your real materials — not generic templates. You can add more anytime in Settings.
         </p>
         <div className="mt-5">
           <ResourceManager />

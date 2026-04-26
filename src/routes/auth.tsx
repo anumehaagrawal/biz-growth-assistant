@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ mode: z.enum(["signin", "signup"]).optional() }),
-  head: () => ({ meta: [{ title: "Sign in — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Club Connect" }] }),
   component: AuthPage,
 });
 
@@ -44,7 +44,7 @@ function AuthPage() {
         });
         if (error) throw error;
         if (data.session) {
-          toast.success("Welcome to Bloom! Let's set up your business.");
+          toast.success("Welcome to Club Connect! Let's set up your business.");
         } else {
           // No session = email confirmation required. Try signing in immediately.
           const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -52,7 +52,7 @@ function AuthPage() {
             toast.success("Account created! Please check your email to confirm, then sign in.");
             setMode("signin");
           } else {
-            toast.success("Welcome to Bloom!");
+            toast.success("Welcome to Club Connect!");
           }
         }
       } else {
@@ -82,7 +82,7 @@ function AuthPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-2xl font-semibold text-ink">Bloom</span>
+          <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
         </Link>
 
         <div className="rounded-3xl border border-border bg-card p-8 shadow-soft">

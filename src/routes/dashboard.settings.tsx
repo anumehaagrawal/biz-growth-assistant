@@ -13,7 +13,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { ResourceManager } from "@/components/ResourceManager";
 
 export const Route = createFileRoute("/dashboard/settings")({
-  head: () => ({ meta: [{ title: "Organization settings — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Organization settings — Club Connect" }] }),
   component: SettingsPage,
 });
 
@@ -65,7 +65,7 @@ function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-4xl text-ink">Your organization</h1>
-      <p className="mt-2 text-muted-foreground">Keep this fresh — Bloom uses it for everything it writes.</p>
+      <p className="mt-2 text-muted-foreground">Keep this fresh — Club Connect uses it for everything it writes.</p>
 
       <form onSubmit={save} className="mt-6 space-y-5 rounded-3xl border border-border bg-card p-8 shadow-soft">
         <div className="grid gap-5 md:grid-cols-2">
@@ -142,7 +142,7 @@ function SettingsPage() {
           <div>
             <h2 className="font-display text-2xl text-ink">Resources & context</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add your website, annual report, mission docs, brochures — Bloom uses these as source material whenever it writes content or builds your outreach plan.
+              Add your website, annual report, mission docs, brochures — Club Connect uses these as source material whenever it writes content or builds your outreach plan.
             </p>
           </div>
         </div>
