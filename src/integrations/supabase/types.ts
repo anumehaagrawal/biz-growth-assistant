@@ -155,6 +155,45 @@ export type Database = {
         }
         Relationships: []
       }
+      posts: {
+        Row: {
+          caption: string
+          created_at: string
+          id: string
+          media_type: string
+          media_url: string
+          org_name: string | null
+          prompt: string | null
+          published: boolean
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          caption: string
+          created_at?: string
+          id?: string
+          media_type: string
+          media_url: string
+          org_name?: string | null
+          prompt?: string | null
+          published?: boolean
+          slug: string
+          user_id: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          org_name?: string | null
+          prompt?: string | null
+          published?: boolean
+          slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

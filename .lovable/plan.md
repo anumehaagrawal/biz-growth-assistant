@@ -1,71 +1,72 @@
 ## Goal
 
-When the user enters their website URL, Bloom automatically discovers all pages on the same domain, extracts text from each, and stores everything as a single combined resource for use as AI context.
+Add a "Posts" creator under the Content tab where the user uploads an image or video, gets an AI-generated caption based on the media + a short brief, previews it as a social-style post card, publishes it to a public gallery on the site, and shares the published link via their email client.
 
-## What changes for the user
+## What gets built
 
-- The "Fetch your website" field stays the same — just paste your homepage URL.
-- After clicking Fetch, we crawl the whole site (up to ~25 pages) and show progress: "Crawling… 8 / 25 pages".
-- The result appears as one resource: e.g. `yourorg.org — 18 pages crawled · 47,213 chars`.
-- Re-fetching the same domain replaces the previous crawl (no duplicates).
-- A small "Re-crawl" button on the resource lets users refresh anytime.
+### 1. Database (one new table + one storage bucket)
 
-## How the crawl works (technical)
+**`posts` table**
+- `id uuid pk`, `user_id uuid`, `business_id uuid` (nullable)
+- `slug text unique` (used in `/p/:slug`)
+- `media_url text`, `media_type text` ('image' | 'video')
+- `caption text`, `prompt text`
+- `published boolean default true`
+- `created_at timestamptz default now()`
+- RLS: owner can CRUD their rows; **public SELECT allowed where `published = true`** so the gallery/detail pages work for unauthenticated visitors.
 
-Crawler logic in `src/utils/resources.functions.ts`, replacing the current `fetchWebsiteResource`:
+**Storage bucket `post-media`** (public read)
+- RLS: authenticated users can insert/update/delete only inside their own `user_id/...` prefix; anyone can read.
 
-1. **Seed discovery** — given `https://example.org`:
-   - Try `/sitemap.xml` and `/sitemap_index.xml` first; parse out `<loc>` URLs (handles nested sitemap indexes).
-   - Fallback: fetch the homepage and extract same-origin `<a href>` links.
-2. **BFS crawl** with strict limits:
-   - Same registrable domain only (no external links).
-   - Max **25 pages**, max depth **2** from seed.
-   - Skip non-HTML extensions (`.pdf`, `.jpg`, `.zip`, etc.) and obvious noise paths (`/wp-admin`, `/cart`, `/login`, `?` query-only URLs, anchors).
-   - Concurrency of **5** parallel fetches with `Promise.all` batches.
-   - 8-second timeout per page via `AbortController`.
-   - Polite `User-Agent: BloomBot/1.0`.
-3. **Per-page extraction** — reuse existing `stripHtml` + `extractTitle`. Store a small structured chunk per page:
-   ```
-   ## About Us  (https://example.org/about)
-   <cleaned text>
-   ```
-4. **Combine + clamp** — concatenate all pages, then apply existing `clamp()` (30k char cap). If we hit the cap, prioritize homepage + `/about` + `/mission` + `/programs` first.
-5. **Store** in `org_resources` as a single row:
-   - `kind: "website"`
-   - `name: "example.org — 18 pages crawled"`
-   - `source_url: <homepage URL>`
-   - `extracted_text: <combined>`
-   - Add new field `metadata jsonb` to store `{ pagesCrawled, pagesAttempted, urls: [...] }` so we can show details later.
-6. **De-duplication** — before insert, delete any existing `kind='website'` row for the same hostname + same user.
+### 2. AI caption generation (server function)
 
-## Database change
+Add `generatePostCaption` to `src/utils/ai.functions.ts`:
+- Input: `mediaUrl`, `mediaType`, `brief`, `platform`, business profile, org resources.
+- Calls Lovable AI Gateway (`google/gemini-2.5-flash`) with a multimodal message — for images, send the public storage URL as an `image_url` content part so the model actually looks at it. For videos, fall back to brief-only (Gateway image input only).
+- Returns `{ caption }` written in the org's brand voice with hashtags + CTA.
 
-Add a `metadata jsonb` column to `org_resources` (nullable, default `{}`) via migration. Stores crawl details without bloating the main schema.
+### 3. New UI component: `PostComposer`
 
-## UI changes
+Lives in `src/components/PostComposer.tsx`, mounted as a 4th tab inside the existing Tabs in `dashboard.content.tsx` (Social / Email / Blog / **Post**).
 
-`src/components/ResourceManager.tsx`:
-- Rename helper text under the URL field: "Paste your homepage — Bloom will read every page on your site."
-- During fetch, replace the spinner-only state with a live counter sourced from a new lightweight progress mechanism: since the server function is one round-trip, we'll show a determinate-looking progress message ("Crawling your site… this can take 20–40s") plus the spinner. (Real streaming progress would require SSE — out of scope for this iteration.)
-- After success: show toast `Crawled 18 pages from yourorg.org`.
-- On the resource row, show `kind: website` items with a subtitle like `18 pages · 47k chars` and a small **Re-crawl** icon button that re-runs the same URL.
+Flow:
+1. **Upload** — drag/drop or file picker. Validates type (image/* or video/*) and size (≤ 20MB). Uploads to `post-media/{user_id}/{uuid}.{ext}`, stores public URL.
+2. **Brief** — short textarea ("What's this post about?") + platform style chooser (Instagram / Facebook / LinkedIn — only changes caption tone).
+3. **Generate caption** — calls `generatePostCaption`. User can edit the result inline.
+4. **Preview card** — Instagram-style card: org avatar/name, square media, caption, like/comment icons (visual only). Reuses the brand styling already in the app.
+5. **Publish** — inserts row into `posts` with a generated slug (`{slugified-first-words}-{shortid}`). Shows the public URL `/p/:slug` with copy button.
+6. **Share via email** — opens `mailto:` with:
+   - `to=` comma-joined recipients from a tag-input (validates each address with zod)
+   - `subject=` first line of caption (truncated)
+   - `body=` caption + blank line + public URL
 
-## Failure handling
+### 4. Public pages (new routes, no auth required)
 
-- If sitemap and homepage both fail → mark `failed` with `"Couldn't reach that site"`.
-- If homepage works but no sub-pages found → store homepage only with note `Only 1 page found`.
-- Per-page failures are silently skipped; only count successes.
-- Hard cap total crawl time at **45 seconds** — return what we have so far if exceeded.
+- **`src/routes/p.$slug.tsx`** — fetches the post by slug (via the public RLS read policy using the anon client), renders the same post card full-width with org name, media, caption, and a small "Made with Bloom" footer. `head()` sets per-route og:title (caption first line), og:description, and **og:image = `media_url`** when the post has an image (omitted for videos).
+- **`src/routes/posts.tsx`** — public gallery listing all `published = true` posts (most recent first), grid of post cards each linking to `/p/:slug`. Has its own `head()` metadata.
 
-## Files touched
+These routes do NOT live under `/dashboard/*` so they're publicly accessible. They use the regular `supabase` browser client; the public RLS policy lets the read succeed without a session.
 
-- `src/utils/resources.functions.ts` — rewrite `fetchWebsiteResource`, add internal helpers `discoverSeedUrls`, `crawlSite`, `parseSitemap`.
-- `src/components/ResourceManager.tsx` — copy update, page-count display, re-crawl button.
-- New migration: `add_metadata_to_org_resources`.
+### 5. "My posts" panel (in dashboard)
 
-## Out of scope (noted for later)
+Below the composer, list the user's existing posts (thumbnail + caption snippet + public link + delete button). Replaces nothing — sits alongside the existing "Recent" content history.
 
-- Live streaming progress (would need SSE / Server-Sent Events).
-- JavaScript-rendered sites (would need Firecrawl/headless browser).
-- Per-page resource storage (user chose combined).
-- Scheduled re-crawls.
+## Files to add / change
+
+**New**
+- `src/components/PostComposer.tsx` — upload + brief + caption + preview + publish + email share
+- `src/routes/p.$slug.tsx` — public single-post page
+- `src/routes/posts.tsx` — public gallery
+- One migration: create `posts` table, RLS policies, storage bucket + storage policies
+
+**Edited**
+- `src/utils/ai.functions.ts` — add `generatePostCaption` server fn (multimodal Gemini call)
+- `src/routes/dashboard.content.tsx` — add a 4th "Post" tab that renders `<PostComposer />`
+
+## Technical notes
+
+- Caption generation runs server-side via `createServerFn` (same pattern as the existing `generateContent`) so the API key stays on the server.
+- For Gemini multimodal: send `{ type: "image_url", image_url: { url: mediaUrl } }` alongside the text prompt; the public storage URL is fetched by the gateway. Videos skip this step and use brief-only.
+- Slugs are generated client-side from the first ~5 words of the caption + a 6-char nanoid suffix to guarantee uniqueness.
+- Email recipients validated with `z.string().email()` per address; capped at 20 recipients to keep `mailto:` URLs under browser length limits.
+- Public routes set per-page `head()` (title, description, og:title, og:description, og:image for image posts) so shared links get proper previews.
