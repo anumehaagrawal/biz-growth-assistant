@@ -172,29 +172,33 @@ function ContentPage() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-5">
-            <Label htmlFor="topic">What's it about?</Label>
-            <Textarea
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="mt-1.5"
-              rows={3}
-              placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
-              maxLength={1000}
-            />
-          </div>
+          {contentType !== "post" && (
+            <>
+              <div className="mt-5">
+                <Label htmlFor="topic">What's it about?</Label>
+                <Textarea
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="mt-1.5"
+                  rows={3}
+                  placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
+                  maxLength={1000}
+                />
+              </div>
 
-          <Button onClick={generate} disabled={generating || !topic.trim()} size="lg" className="mt-5 w-full rounded-full shadow-warm">
-            {generating ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Writing...</>
-            ) : (
-              <><Sparkles className="mr-2 h-4 w-4" />Generate</>
-            )}
-          </Button>
+              <Button onClick={generate} disabled={generating || !topic.trim()} size="lg" className="mt-5 w-full rounded-full shadow-warm">
+                {generating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Writing...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" />Generate</>
+                )}
+              </Button>
+            </>
+          )}
         </div>
 
-        {latest && (
+        {contentType !== "post" && latest && (
           <div className="mt-6 rounded-3xl border-2 border-primary/30 bg-card p-6 shadow-warm">
             <div className="mb-3 flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
