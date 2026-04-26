@@ -35,10 +35,17 @@ function ContentPage() {
   const [generating, setGenerating] = useState(false);
   const [history, setHistory] = useState<ContentPiece[]>([]);
   const [latest, setLatest] = useState<string | null>(null);
+  const [resourceCount, setResourceCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     refreshHistory();
+    supabase
+      .from("org_resources")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "ready")
+      .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
 
   const refreshHistory = async () => {
@@ -57,7 +64,14 @@ function ContentPage() {
     setGenerating(true);
     setLatest(null);
     try {
-      const { data: business } = await supabase.from("businesses").select("*").eq("user_id", user.id).single();
+      const [{ data: business }, { data: resources }] = await Promise.all([
+        supabase.from("businesses").select("*").eq("user_id", user.id).single(),
+        supabase
+          .from("org_resources")
+          .select("name,extracted_text")
+          .eq("user_id", user.id)
+          .eq("status", "ready"),
+      ]);
       if (!business) throw new Error("Business profile not found");
 
       const { output } = await generateFn({
@@ -70,10 +84,14 @@ function ContentPage() {
             brand_voice: business.brand_voice,
             goals: business.goals,
             location: business.location,
+            website: business.website,
           },
           contentType,
           topic,
           platform: contentType === "social" ? platform : undefined,
+          resources: (resources ?? [])
+            .filter((r) => r.extracted_text && r.extracted_text.length > 0)
+            .map((r) => ({ name: r.name, text: r.extracted_text })),
         },
       });
 
@@ -109,6 +127,15 @@ function ContentPage() {
       <div>
         <h1 className="font-display text-4xl text-ink">Tell your story</h1>
         <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
+        {resourceCount > 0 ? (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Sparkles className="h-3 w-3" /> Writing with {resourceCount} resource{resourceCount === 1 ? "" : "s"} as context
+          </p>
+        ) : (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+            Tip: add your website or docs in <a href="/dashboard/settings" className="ml-1 underline">Settings</a> for richer, on-brand writing
+          </p>
+        )}
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>

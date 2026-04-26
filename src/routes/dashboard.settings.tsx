@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import { ResourceManager } from "@/components/ResourceManager";
 
 export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({ meta: [{ title: "Organization settings — Bloom" }] }),
@@ -48,6 +49,7 @@ function SettingsPage() {
         target_audience: form.target_audience,
         brand_voice: form.brand_voice,
         location: form.location,
+        website: form.website,
         goals: form.goals,
       })
       .eq("user_id", user.id);
@@ -88,6 +90,16 @@ function SettingsPage() {
               className="mt-1.5"
             />
           </div>
+          <div className="md:col-span-2">
+            <Label>Website</Label>
+            <Input
+              type="url"
+              value={form.website ?? ""}
+              onChange={(e) => update("website", e.target.value)}
+              placeholder="https://yourorg.org"
+              className="mt-1.5"
+            />
+          </div>
         </div>
 
         <div>
@@ -121,6 +133,21 @@ function SettingsPage() {
           {saving ? "Saving..." : "Save changes"}
         </Button>
       </form>
+
+      <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <div className="mb-5 flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
+            <Sparkles className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display text-2xl text-ink">Resources & context</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add your website, annual report, mission docs, brochures — Bloom uses these as source material whenever it writes content or builds your outreach plan.
+            </p>
+          </div>
+        </div>
+        <ResourceManager />
+      </section>
     </div>
   );
 }

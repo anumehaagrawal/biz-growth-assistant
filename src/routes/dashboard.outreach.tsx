@@ -47,10 +47,17 @@ function OutreachPage() {
   const [planDate, setPlanDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [resourceCount, setResourceCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     loadCurrentPlan();
+    supabase
+      .from("org_resources")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "ready")
+      .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
 
   const loadCurrentPlan = async () => {
@@ -74,7 +81,14 @@ function OutreachPage() {
     if (!user) return;
     setGenerating(true);
     try {
-      const { data: business } = await supabase.from("businesses").select("*").eq("user_id", user.id).single();
+      const [{ data: business }, { data: resources }] = await Promise.all([
+        supabase.from("businesses").select("*").eq("user_id", user.id).single(),
+        supabase
+          .from("org_resources")
+          .select("name,extracted_text")
+          .eq("user_id", user.id)
+          .eq("status", "ready"),
+      ]);
       if (!business) throw new Error("Business profile not found");
 
       const { plan: newPlan } = await generateFn({
@@ -87,7 +101,11 @@ function OutreachPage() {
             brand_voice: business.brand_voice,
             goals: business.goals,
             location: business.location,
+            website: business.website,
           },
+          resources: (resources ?? [])
+            .filter((r) => r.extracted_text && r.extracted_text.length > 0)
+            .map((r) => ({ name: r.name, text: r.extracted_text })),
         },
       });
 
@@ -146,6 +164,11 @@ function OutreachPage() {
           <p className="text-sm font-medium uppercase tracking-wider text-primary">Week of {weekLabel}</p>
           <h1 className="mt-1 font-display text-4xl text-ink">Your outreach plan</h1>
           <p className="mt-2 max-w-xl text-muted-foreground">{plan.intro}</p>
+          {resourceCount > 0 && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3 w-3" /> Built from {resourceCount} resource{resourceCount === 1 ? "" : "s"}
+            </p>
+          )}
         </div>
         <Button variant="outline" onClick={generate} disabled={generating} className="rounded-full">
           {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}

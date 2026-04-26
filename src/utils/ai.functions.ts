@@ -11,7 +11,26 @@ const businessSchema = z.object({
   brand_voice: z.string().min(1).max(100),
   goals: z.string().max(2000).optional().nullable(),
   location: z.string().max(200).optional().nullable(),
+  website: z.string().max(500).optional().nullable(),
 });
+
+const resourceSchema = z.object({
+  name: z.string().min(1).max(300),
+  text: z.string().min(1).max(40_000),
+});
+
+const TOTAL_RESOURCE_BUDGET = 60_000;
+
+function buildResourceSection(resources: Array<{ name: string; text: string }> | undefined): string {
+  if (!resources || resources.length === 0) return "";
+  // Fair-share budget per resource
+  const perItem = Math.floor(TOTAL_RESOURCE_BUDGET / resources.length);
+  const blocks = resources.map((r) => {
+    const snippet = r.text.length > perItem ? r.text.slice(0, perItem) + "\n[...truncated]" : r.text;
+    return `--- RESOURCE: ${r.name} ---\n${snippet}`;
+  });
+  return `\n\nREFERENCE MATERIALS from the organization (use the facts, language, programs, and tone from these — never invent statistics, quotes, or program names; if something isn't in the materials and you're unsure, keep it general rather than fabricate):\n\n${blocks.join("\n\n")}`;
+}
 
 async function callAI(messages: Array<{ role: string; content: string }>, opts: { tools?: any[]; tool_choice?: any } = {}) {
   const apiKey = process.env.LOVABLE_API_KEY;
@@ -48,10 +67,11 @@ export const generateContent = createServerFn({ method: "POST" })
       contentType: z.enum(["social", "email", "blog"]),
       topic: z.string().min(1).max(1000),
       platform: z.string().max(50).optional(),
+      resources: z.array(resourceSchema).max(20).optional(),
     })
   )
   .handler(async ({ data }) => {
-    const { business, contentType, topic, platform } = data;
+    const { business, contentType, topic, platform, resources } = data;
 
     const formatGuide = {
       social: `a ${platform || "Instagram"} post for a non-profit (caption + 5-10 relevant hashtags). Make it human and emotionally resonant — the goal is to inspire action (donate, volunteer, share, advocate). ${platform === "linkedin" ? "Lean professional and impact-focused." : "Keep it warm, vivid, and scroll-stopping."}`,
@@ -65,9 +85,10 @@ About the organization & mission: ${business.description}
 Who they're trying to reach (donors, volunteers, supporters, beneficiaries): ${business.target_audience}
 Brand voice: ${business.brand_voice}
 ${business.location ? `Location / area served: ${business.location}` : ""}
+${business.website ? `Website: ${business.website}` : ""}
 ${business.goals ? `Current mission goals: ${business.goals}` : ""}
 
-Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.`;
+Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.${buildResourceSection(resources)}`;
 
     const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
 
@@ -82,11 +103,11 @@ Write content that sounds genuinely human and mission-driven — never generic A
   });
 
 export const generateOutreachPlan = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ business: businessSchema }))
+  .inputValidator(z.object({ business: businessSchema, resources: z.array(resourceSchema).max(20).optional() }))
   .handler(async ({ data }) => {
-    const { business } = data;
+    const { business, resources } = data;
 
-    const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community. Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice.`;
+    const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community. Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice. When reference materials are provided, ground every strategy in real programs, partners, audiences, or wins from those materials — never invent.${buildResourceSection(resources)}`;
 
     const userPrompt = `Create this week's outreach plan for:
 

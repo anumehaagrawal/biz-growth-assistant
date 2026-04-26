@@ -89,6 +89,45 @@ export type Database = {
         }
         Relationships: []
       }
+      org_resources: {
+        Row: {
+          char_count: number
+          created_at: string
+          error: string | null
+          extracted_text: string
+          id: string
+          kind: string
+          name: string
+          source_url: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          char_count?: number
+          created_at?: string
+          error?: string | null
+          extracted_text?: string
+          id?: string
+          kind: string
+          name: string
+          source_url?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          char_count?: number
+          created_at?: string
+          error?: string | null
+          extracted_text?: string
+          id?: string
+          kind?: string
+          name?: string
+          source_url?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       outreach_plans: {
         Row: {
           created_at: string

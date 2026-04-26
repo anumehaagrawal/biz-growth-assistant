@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import { ResourceManager } from "@/components/ResourceManager";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
   head: () => ({ meta: [{ title: "Set up your organization — Bloom" }] }),
@@ -137,6 +138,17 @@ function Onboarding() {
               className="mt-1.5"
             />
           </div>
+          <div className="md:col-span-2">
+            <Label htmlFor="website">Website (optional)</Label>
+            <Input
+              id="website"
+              type="url"
+              value={form.website}
+              onChange={(e) => update("website", e.target.value)}
+              placeholder="https://yourorg.org"
+              className="mt-1.5"
+            />
+          </div>
         </div>
 
         <div>
@@ -196,6 +208,16 @@ function Onboarding() {
           {submitting ? "Setting up..." : "Continue to Bloom"}
         </Button>
       </form>
+
+      <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <h2 className="font-display text-2xl text-ink">Add resources (optional)</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop in your website, annual report, brochures, or mission docs. Bloom will write from your real materials — not generic templates. You can add more anytime in Settings.
+        </p>
+        <div className="mt-5">
+          <ResourceManager />
+        </div>
+      </section>
     </div>
   );
 }
