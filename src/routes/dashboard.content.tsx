@@ -170,8 +170,53 @@ function ContentPage() {
                 </SelectContent>
               </Select>
             </TabsContent>
-            <TabsContent value="email" className="mt-5 text-sm text-muted-foreground">
-              Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
+            <TabsContent value="email" className="mt-5 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
+              </p>
+              <div>
+                <Label>Image (optional)</Label>
+                {emailImageUrl ? (
+                  <div className="mt-1.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
+                    <img src={emailImageUrl} alt="Email attachment" className="h-16 w-16 rounded-lg object-cover" />
+                    <div className="flex-1 text-xs text-muted-foreground">
+                      The AI will reference this image while writing.
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setEmailImageUrl(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      disabled={uploadingImage}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {uploadingImage ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
+                      ) : (
+                        <><Upload className="mr-2 h-4 w-4" />Add an image</>
+                      )}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleEmailImage(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <p className="mt-1.5 text-xs text-muted-foreground">PNG or JPG, up to 20MB. Helps the AI write something specific to your photo.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
               ~500-700 word impact story or update with subheadings and a clear ask.
