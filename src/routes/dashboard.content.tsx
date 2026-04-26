@@ -60,12 +60,37 @@ function ContentPage() {
   const generateFn = useServerFn(generateContent);
   const generateKitFn = useServerFn(generateOutreachKit);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [contentType, setContentType] = useState<"generator" | "social" | "email" | "blog" | "post">("generator");
+  const [contentType, setContentTypeState] = useState<"generator" | "social" | "email" | "blog" | "post">("generator");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
+  const [topicTouched, setTopicTouched] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const buildBriefFromActivity = (): string => {
+    const { program, audience, schedule, callToAction, photoNote } = activityForm;
+    const parts: string[] = [];
+    if (program) parts.push(program);
+    if (audience) parts.push(`for ${audience}`);
+    if (schedule) parts.push(`on ${schedule}`);
+    if (callToAction) parts.push(`Call to action: ${callToAction}.`);
+    if (photoNote) parts.push(photoNote);
+    return parts.join(" — ").trim();
+  };
+
+  const setContentType = (next: "generator" | "social" | "email" | "blog" | "post") => {
+    setContentTypeState(next);
+    if (next !== "generator" && next !== "post") {
+      // Prefill photo from the Generator event image so members don't re-upload
+      if (!imageUrl && eventImageUrl) setImageUrl(eventImageUrl);
+      // Prefill brief from the Generator activity unless the user has typed their own
+      if (!topicTouched) {
+        const brief = buildBriefFromActivity();
+        if (brief) setTopic(brief);
+      }
+    }
+  };
 
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
@@ -701,10 +726,15 @@ function ContentPage() {
 
               <div className="mt-5">
                 <Label htmlFor="topic">A quick brief</Label>
+                {(eventImageUrl || buildBriefFromActivity()) && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Prefilled from your Generator activity{eventImageUrl ? " (photo + details)" : ""}. Edit freely.
+                  </p>
+                )}
                 <Textarea
                   id="topic"
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
+                  onChange={(e) => { setTopic(e.target.value); setTopicTouched(true); }}
                   className="mt-1.5"
                   rows={3}
                   placeholder={
