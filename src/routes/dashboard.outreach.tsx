@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateOutreachPlan } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, RefreshCw, Loader2, Clock, Users, Megaphone, Mail, Calendar as CalIcon, HeartHandshake, MessageSquare } from "lucide-react";
+import { Sparkles, RefreshCw, Loader2, Clock, Users, Megaphone, Mail, Calendar as CalIcon, HeartHandshake, MessageSquare, Settings2, ChevronDown, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/outreach")({
   head: () => ({ meta: [{ title: "Weekly outreach plan — Bloom" }] }),
