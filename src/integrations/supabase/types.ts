@@ -260,6 +260,48 @@ export type Database = {
         }
         Relationships: []
       }
+      signups: {
+        Row: {
+          checked_in_at: string | null
+          child_name: string
+          created_at: string
+          grade: string | null
+          id: string
+          kit_code: string | null
+          notes: string | null
+          parent_contact: string | null
+          parent_name: string
+          staff_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          child_name: string
+          created_at?: string
+          grade?: string | null
+          id?: string
+          kit_code?: string | null
+          notes?: string | null
+          parent_contact?: string | null
+          parent_name: string
+          staff_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          child_name?: string
+          created_at?: string
+          grade?: string | null
+          id?: string
+          kit_code?: string | null
+          notes?: string | null
+          parent_contact?: string | null
+          parent_name?: string
+          staff_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
