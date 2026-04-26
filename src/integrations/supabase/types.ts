@@ -89,6 +89,51 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_up_contacts: {
+        Row: {
+          activity_attended: string
+          child_name: string
+          created_at: string
+          date_attended: string
+          follow_up_status: string
+          grade: string
+          guardian_contact: string
+          id: string
+          interest_area: string | null
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_attended: string
+          child_name: string
+          created_at?: string
+          date_attended: string
+          follow_up_status?: string
+          grade: string
+          guardian_contact: string
+          id?: string
+          interest_area?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_attended?: string
+          child_name?: string
+          created_at?: string
+          date_attended?: string
+          follow_up_status?: string
+          grade?: string
+          guardian_contact?: string
+          id?: string
+          interest_area?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       org_resources: {
         Row: {
           char_count: number

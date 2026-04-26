@@ -18,6 +18,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardOutreachRouteImport } from './routes/dashboard.outreach'
 import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
+import { Route as DashboardFollowUpRouteImport } from './routes/dashboard.follow-up'
 import { Route as DashboardContentRouteImport } from './routes/dashboard.content'
 
 const PostsRoute = PostsRouteImport.update({
@@ -65,6 +66,11 @@ const DashboardOnboardingRoute = DashboardOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardFollowUpRoute = DashboardFollowUpRouteImport.update({
+  id: '/follow-up',
+  path: '/follow-up',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardContentRoute = DashboardContentRouteImport.update({
   id: '/content',
   path: '/content',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/posts'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/posts'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/posts'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -218,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardOnboardingRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/follow-up': {
+      id: '/dashboard/follow-up'
+      path: '/follow-up'
+      fullPath: '/dashboard/follow-up'
+      preLoaderRoute: typeof DashboardFollowUpRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/content': {
       id: '/dashboard/content'
       path: '/content'
@@ -230,6 +249,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardContentRoute: typeof DashboardContentRoute
+  DashboardFollowUpRoute: typeof DashboardFollowUpRoute
   DashboardOnboardingRoute: typeof DashboardOnboardingRoute
   DashboardOutreachRoute: typeof DashboardOutreachRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
@@ -238,6 +258,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardContentRoute: DashboardContentRoute,
+  DashboardFollowUpRoute: DashboardFollowUpRoute,
   DashboardOnboardingRoute: DashboardOnboardingRoute,
   DashboardOutreachRoute: DashboardOutreachRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,

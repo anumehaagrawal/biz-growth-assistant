@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,17 +9,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { generateContent } from "@/utils/ai.functions";
+import { generateContent, generateOutreachKit, type OutreachKit } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send } from "lucide-react";
+import {
+  Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send,
+  Wand2, Clipboard, MessageSquare, Newspaper, QrCode,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
 
 const emailSchema = z.string().trim().email();
 
+type ActivityForm = {
+  program: string;
+  audience: string;
+  schedule: string;
+  callToAction: string;
+  photoNote: string;
+};
+
+const defaultActivityForm: ActivityForm = {
+  program: "",
+  audience: "Middle school students",
+  schedule: "",
+  callToAction: "Visit the Club this week",
+  photoNote: "",
+};
+
+const kitSections: Array<{ key: keyof OutreachKit; label: string; icon: LucideIcon }> = [
+  { key: "social_caption", label: "Instagram / Facebook", icon: MessageSquare },
+  { key: "flyer_copy", label: "Printable Flyer Copy", icon: FileText },
+  { key: "newsletter_blurb", label: "School Newsletter Blurb", icon: Newspaper },
+  { key: "parent_message", label: "Parent SMS / WhatsApp", icon: Clipboard },
+  { key: "qr_card_text", label: "Community QR Card", icon: QrCode },
+  { key: "short_description", label: "Short Event Description", icon: Sparkles },
+];
+
 export const Route = createFileRoute("/dashboard/content")({
-  head: () => ({ meta: [{ title: "Create content — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Staff outreach generator — Club Connect" }] }),
   component: ContentPage,
 });
 
@@ -26,8 +56,9 @@ export const Route = createFileRoute("/dashboard/content")({
 function ContentPage() {
   const { user } = useAuth();
   const generateFn = useServerFn(generateContent);
+  const generateKitFn = useServerFn(generateOutreachKit);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [contentType, setContentType] = useState<"social" | "email" | "blog" | "post">("social");
+  const [contentType, setContentType] = useState<"generator" | "social" | "email" | "blog" | "post">("generator");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -38,6 +69,54 @@ function ContentPage() {
   const [resourceCount, setResourceCount] = useState(0);
   const [emails, setEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState("");
+
+  // Generator (outreach kit) state
+  const [activityForm, setActivityForm] = useState<ActivityForm>(defaultActivityForm);
+  const [kitGenerating, setKitGenerating] = useState(false);
+  const [latestKit, setLatestKit] = useState<OutreachKit | null>(null);
+
+  const updateActivity = (key: keyof ActivityForm, value: string) =>
+    setActivityForm((current) => ({ ...current, [key]: value }));
+
+  const generateKit = async () => {
+    if (!user || !activityForm.program.trim() || !activityForm.schedule.trim()) return;
+    setKitGenerating(true);
+    setLatestKit(null);
+    try {
+      const { data: business } = await supabase
+        .from("businesses").select("*").eq("user_id", user.id).single();
+      if (!business) throw new Error("Organization profile not found");
+
+      const { kit } = await generateKitFn({
+        data: {
+          business: {
+            name: business.name,
+            industry: business.industry?.trim() || "general",
+            description: business.description,
+            target_audience: business.target_audience,
+            brand_voice: business.brand_voice,
+            goals: business.goals,
+            location: business.location,
+            website: business.website,
+          },
+          activity: activityForm,
+        },
+      });
+      setLatestKit(kit);
+      await supabase.from("content_pieces").insert({
+        user_id: user.id,
+        content_type: "outreach_kit",
+        prompt: `${activityForm.program} for ${activityForm.audience} - ${activityForm.schedule}`,
+        output: JSON.stringify(kit),
+        metadata: activityForm,
+      });
+      toast.success("Outreach kit is ready");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Couldn't generate outreach kit");
+    } finally {
+      setKitGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -78,8 +157,8 @@ function ContentPage() {
   };
 
   const generate = async () => {
-    if (!user || !topic.trim() || contentType === "post") return;
-    const ct = contentType;
+    if (!user || !topic.trim() || contentType === "post" || contentType === "generator") return;
+    const ct = contentType as "social" | "email" | "blog";
     setGenerating(true);
     setLatest(null);
     try {
@@ -197,7 +276,7 @@ function ContentPage() {
     <div className="mx-auto max-w-3xl">
       <div>
         <div className="flex items-start justify-between gap-4">
-          <h1 className="font-display text-4xl text-ink">Tell your story</h1>
+          <h1 className="font-display text-4xl text-ink">Staff outreach studio</h1>
           <Link
             to="/posts"
             target="_blank"
@@ -206,7 +285,7 @@ function ContentPage() {
             View public gallery →
           </Link>
         </div>
-        <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
+        <p className="mt-2 text-muted-foreground">Generate full outreach kits, or write a single piece of content for social, email, blog, or a new public post.</p>
         {resourceCount > 0 ? (
           <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="h-3 w-3" /> Writing with {resourceCount} resource{resourceCount === 1 ? "" : "s"} as context
@@ -219,12 +298,109 @@ function ContentPage() {
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>
-            <TabsList className="grid w-full grid-cols-4 rounded-full bg-secondary p-1">
+            <TabsList className="grid w-full grid-cols-5 rounded-full bg-secondary p-1">
+              <TabsTrigger value="generator" className="rounded-full"><Wand2 className="mr-1.5 h-4 w-4" />Generator</TabsTrigger>
               <TabsTrigger value="social" className="rounded-full"><Instagram className="mr-1.5 h-4 w-4" />Social</TabsTrigger>
               <TabsTrigger value="email" className="rounded-full"><Mail className="mr-1.5 h-4 w-4" />Email</TabsTrigger>
               <TabsTrigger value="blog" className="rounded-full"><FileText className="mr-1.5 h-4 w-4" />Blog</TabsTrigger>
               <TabsTrigger value="post" className="rounded-full"><ImageIcon className="mr-1.5 h-4 w-4" />Post</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="generator" className="mt-5">
+              <p className="text-sm text-muted-foreground">
+                Add a Club moment and get ready-to-share copy for social, flyer, school newsletter, parent SMS, QR card, and a short description — all at once.
+              </p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <Label htmlFor="program">What is happening?</Label>
+                  <Input
+                    id="program"
+                    value={activityForm.program}
+                    onChange={(e) => updateActivity("program", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Robotics build night"
+                    maxLength={160}
+                  />
+                </div>
+                <div>
+                  <Label>Who is it for?</Label>
+                  <Select value={activityForm.audience} onValueChange={(v) => updateActivity("audience", v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Elementary students">Elementary students</SelectItem>
+                      <SelectItem value="Middle school students">Middle school students</SelectItem>
+                      <SelectItem value="High school teens">High school teens</SelectItem>
+                      <SelectItem value="K-12 families">K-12 families</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="schedule">When is it?</Label>
+                  <Input
+                    id="schedule"
+                    value={activityForm.schedule}
+                    onChange={(e) => updateActivity("schedule", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Wednesday at 4:30pm"
+                    maxLength={200}
+                  />
+                </div>
+                <div>
+                  <Label>What should families do next?</Label>
+                  <Select value={activityForm.callToAction} onValueChange={(v) => updateActivity("callToAction", v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Visit the Club this week">Visit the Club this week</SelectItem>
+                      <SelectItem value="Stop by from 4-6pm">Stop by from 4-6pm</SelectItem>
+                      <SelectItem value="Ask us for signup help">Ask us for signup help</SelectItem>
+                      <SelectItem value="Bring your child for a first visit">Bring your child for a first visit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="photoNote">Photo or context note</Label>
+                  <Input
+                    id="photoNote"
+                    value={activityForm.photoNote}
+                    onChange={(e) => updateActivity("photoNote", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Optional: kids building robots, staff demo table"
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={generateKit}
+                disabled={kitGenerating || !activityForm.program.trim() || !activityForm.schedule.trim()}
+                size="lg"
+                className="mt-5 w-full rounded-full shadow-warm"
+              >
+                {kitGenerating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building kit...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" />Generate outreach kit</>
+                )}
+              </Button>
+
+              {latestKit && (
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {kitSections.map(({ key, label, icon: Icon }) => (
+                    <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-primary" />
+                          <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => copy(latestKit[key])}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{latestKit[key]}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="post" className="mt-5">
               <PostComposer />
@@ -250,7 +426,7 @@ function ContentPage() {
             </TabsContent>
           </Tabs>
 
-          {contentType !== "post" && (
+          {contentType !== "post" && contentType !== "generator" && (
             <>
               <div className="mt-5">
                 <Label>Photo (required for grounded writing)</Label>
