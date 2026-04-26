@@ -164,6 +164,11 @@ function OutreachPage() {
           <p className="text-sm font-medium uppercase tracking-wider text-primary">Week of {weekLabel}</p>
           <h1 className="mt-1 font-display text-4xl text-ink">Your outreach plan</h1>
           <p className="mt-2 max-w-xl text-muted-foreground">{plan.intro}</p>
+          {resourceCount > 0 && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3 w-3" /> Built from {resourceCount} resource{resourceCount === 1 ? "" : "s"}
+            </p>
+          )}
         </div>
         <Button variant="outline" onClick={generate} disabled={generating} className="rounded-full">
           {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
