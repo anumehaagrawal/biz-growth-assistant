@@ -122,7 +122,7 @@ function OutreachPage() {
         </div>
         <h1 className="mt-5 font-display text-4xl text-ink">Your weekly outreach plan</h1>
         <p className="mt-3 text-muted-foreground">
-          Five concrete moves, hand-picked for your business. A fresh plan every week.
+          Five concrete moves to grow donors, volunteers, and partnerships — hand-picked for your mission. A fresh plan every week.
         </p>
         <Button onClick={generate} size="lg" disabled={generating} className="mt-6 rounded-full shadow-warm">
           {generating ? (
