@@ -66,6 +66,12 @@ function OutreachPage() {
       .eq("user_id", user.id)
       .eq("status", "ready")
       .then(({ count }) => setResourceCount(count ?? 0));
+    supabase
+      .from("businesses")
+      .select("location")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setBusinessLocation(data?.location ?? null));
   }, [user]);
 
   const loadCurrentPlan = async () => {
