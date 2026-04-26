@@ -10,7 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateContent } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Copy, Trash2, Loader2, Instagram, Mail, FileText } from "lucide-react";
+import { Sparkles, Copy, Trash2, Loader2, Instagram, Mail, FileText, ImageIcon } from "lucide-react";
+import { PhotoPostCreator } from "@/components/PhotoPostCreator";
 
 export const Route = createFileRoute("/dashboard/content")({
   head: () => ({ meta: [{ title: "Create content — Bloom" }] }),
@@ -29,7 +30,7 @@ type ContentPiece = {
 function ContentPage() {
   const { user } = useAuth();
   const generateFn = useServerFn(generateContent);
-  const [contentType, setContentType] = useState<"social" | "email" | "blog">("social");
+  const [contentType, setContentType] = useState<"social" | "email" | "blog" | "photo">("social");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -112,10 +113,11 @@ function ContentPage() {
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>
-            <TabsList className="grid w-full grid-cols-3 rounded-full bg-secondary p-1">
+            <TabsList className="grid w-full grid-cols-4 rounded-full bg-secondary p-1">
               <TabsTrigger value="social" className="rounded-full"><Instagram className="mr-1.5 h-4 w-4" />Social</TabsTrigger>
               <TabsTrigger value="email" className="rounded-full"><Mail className="mr-1.5 h-4 w-4" />Email</TabsTrigger>
               <TabsTrigger value="blog" className="rounded-full"><FileText className="mr-1.5 h-4 w-4" />Blog</TabsTrigger>
+              <TabsTrigger value="photo" className="rounded-full"><ImageIcon className="mr-1.5 h-4 w-4" />Photo Post</TabsTrigger>
             </TabsList>
 
             <TabsContent value="social" className="mt-5">
@@ -136,28 +138,38 @@ function ContentPage() {
             <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
               ~500-700 word impact story or update with subheadings and a clear ask.
             </TabsContent>
+            <TabsContent value="photo" className="mt-5">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Upload a photo or video from your club — AI will write a branded post caption, ready to share on social or via email.
+              </p>
+              <PhotoPostCreator />
+            </TabsContent>
           </Tabs>
 
-          <div className="mt-5">
-            <Label htmlFor="topic">What's it about?</Label>
-            <Textarea
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="mt-1.5"
-              rows={3}
-              placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
-              maxLength={1000}
-            />
-          </div>
+          {contentType !== "photo" && (
+            <>
+              <div className="mt-5">
+                <Label htmlFor="topic">What's it about?</Label>
+                <Textarea
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="mt-1.5"
+                  rows={3}
+                  placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
+                  maxLength={1000}
+                />
+              </div>
 
-          <Button onClick={generate} disabled={generating || !topic.trim()} size="lg" className="mt-5 w-full rounded-full shadow-warm">
-            {generating ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Writing...</>
-            ) : (
-              <><Sparkles className="mr-2 h-4 w-4" />Generate</>
-            )}
-          </Button>
+              <Button onClick={generate} disabled={generating || !topic.trim()} size="lg" className="mt-5 w-full rounded-full shadow-warm">
+                {generating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Writing...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" />Generate</>
+                )}
+              </Button>
+            </>
+          )}
         </div>
 
         {latest && (

@@ -89,6 +89,39 @@ export type Database = {
         }
         Relationships: []
       }
+      media_posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          media_type: string
+          media_url: string
+          platform: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          media_type?: string
+          media_url: string
+          platform?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          media_type?: string
+          media_url?: string
+          platform?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       outreach_plans: {
         Row: {
           created_at: string
