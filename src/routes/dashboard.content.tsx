@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,17 +9,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { generateContent } from "@/utils/ai.functions";
+import { generateContent, generateOutreachKit, type OutreachKit } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send } from "lucide-react";
+import {
+  Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send,
+  Wand2, Clipboard, MessageSquare, Newspaper, QrCode,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
 
 const emailSchema = z.string().trim().email();
 
+type ActivityForm = {
+  program: string;
+  audience: string;
+  schedule: string;
+  callToAction: string;
+  photoNote: string;
+};
+
+const defaultActivityForm: ActivityForm = {
+  program: "",
+  audience: "Middle school students",
+  schedule: "",
+  callToAction: "Visit the Club this week",
+  photoNote: "",
+};
+
+const kitSections: Array<{ key: keyof OutreachKit; label: string; icon: LucideIcon }> = [
+  { key: "social_caption", label: "Instagram / Facebook", icon: MessageSquare },
+  { key: "flyer_copy", label: "Printable Flyer Copy", icon: FileText },
+  { key: "newsletter_blurb", label: "School Newsletter Blurb", icon: Newspaper },
+  { key: "parent_message", label: "Parent SMS / WhatsApp", icon: Clipboard },
+  { key: "qr_card_text", label: "Community QR Card", icon: QrCode },
+  { key: "short_description", label: "Short Event Description", icon: Sparkles },
+];
+
 export const Route = createFileRoute("/dashboard/content")({
-  head: () => ({ meta: [{ title: "Create content — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Staff outreach generator — Club Connect" }] }),
   component: ContentPage,
 });
 
