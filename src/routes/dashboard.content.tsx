@@ -27,7 +27,7 @@ function ContentPage() {
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [emailImageUrl, setEmailImageUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [latest, setLatest] = useState<string | null>(null);
@@ -43,7 +43,7 @@ function ContentPage() {
       .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
 
-  const handleEmailImage = async (file: File) => {
+  const handleImage = async (file: File) => {
     if (!user) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Please choose an image file");
@@ -62,7 +62,7 @@ function ContentPage() {
         .upload(path, file, { contentType: file.type, upsert: false });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("post-media").getPublicUrl(path);
-      setEmailImageUrl(pub.publicUrl);
+      setImageUrl(pub.publicUrl);
       toast.success("Image attached");
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed");
@@ -102,7 +102,7 @@ function ContentPage() {
           contentType: ct,
           topic,
           platform: ct === "social" ? platform : undefined,
-          imageUrl: ct === "email" && emailImageUrl ? emailImageUrl : undefined,
+          imageUrl: imageUrl ?? undefined,
           resources: (resources ?? [])
             .filter((r) => r.extracted_text && r.extracted_text.length > 0)
             .map((r) => ({ name: r.name, text: r.extracted_text })),
@@ -115,7 +115,10 @@ function ContentPage() {
         content_type: ct,
         prompt: topic,
         output,
-        metadata: ct === "social" ? { platform } : ct === "email" && emailImageUrl ? { imageUrl: emailImageUrl } : {},
+        metadata: {
+          ...(ct === "social" ? { platform } : {}),
+          ...(imageUrl ? { imageUrl } : {}),
+        },
       });
       toast.success("Fresh content, ready to go!");
     } catch (e: any) {
