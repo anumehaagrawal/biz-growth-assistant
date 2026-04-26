@@ -21,6 +21,260 @@ const resourceSchema = z.object({
 
 const TOTAL_RESOURCE_BUDGET = 60_000;
 
+type VerifiedLocalEvent = {
+  name: string;
+  date: string;
+  venue?: string;
+  whyFit: string;
+  sourceUrl: string;
+  sourceLabel: string;
+};
+
+type OutreachStrategy = {
+  title: string;
+  category: "partnership" | "community" | "content" | "direct" | "referral" | "event";
+  why: string;
+  steps: string[];
+  time_estimate: string;
+};
+
+type OutreachPlan = {
+  intro: string;
+  strategies: OutreachStrategy[];
+};
+
+const RAINIER_BEACH_EVENTS_URL = "https://rainierbeachcommunityclub.org/events/";
+const DEFAULT_RAINIER_BEACH_VENUE = "Rainier Beach Community Club, 6038 S. Pilgrim St, Seattle, WA 98118";
+const MONTH_INDEX: Record<string, number> = {
+  january: 0,
+  jan: 0,
+  february: 1,
+  feb: 1,
+  march: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  may: 4,
+  june: 5,
+  jun: 5,
+  july: 6,
+  jul: 6,
+  august: 7,
+  aug: 7,
+  september: 8,
+  sep: 8,
+  sept: 8,
+  october: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  december: 11,
+  dec: 11,
+};
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#8211;|&ndash;/gi, "-")
+    .replace(/&#8212;|&mdash;/gi, "—")
+    .replace(/&#8217;|&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)));
+}
+
+function stripTags(html: string): string {
+  return normalizeWhitespace(
+    decodeHtmlEntities(html.replace(/<br\s*\/?>/gi, ", ").replace(/<[^>]+>/g, " "))
+  );
+}
+
+function parseEventTimestamp(dateText: string, now = new Date()): number | null {
+  const match = dateText
+    .replace(/\*/g, " ")
+    .match(/(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)\s+(\d{1,2})(?:,\s*(\d{4}))?/i);
+
+  if (!match) return null;
+
+  const month = MONTH_INDEX[match[1].toLowerCase()];
+  const day = Number(match[2]);
+  const year = match[3] ? Number(match[3]) : now.getFullYear();
+  const timestamp = new Date(year, month, day).getTime();
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function isUpcomingEvent(dateText: string, now = new Date()): boolean {
+  const timestamp = parseEventTimestamp(dateText, now);
+  if (!timestamp) return false;
+
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - 24 * 60 * 60 * 1000;
+  const end = start + 90 * 24 * 60 * 60 * 1000;
+  return timestamp >= start && timestamp <= end;
+}
+
+function inferRainierBeachVenue(text: string, sourceUrl: string): string | undefined {
+  if (/6038\s+S\.?\s+Pilgrim/i.test(text)) return DEFAULT_RAINIER_BEACH_VENUE;
+  if (/clubhouse|pilgrim street/i.test(text) && sourceUrl.includes("rainierbeachcommunityclub.org")) {
+    return DEFAULT_RAINIER_BEACH_VENUE;
+  }
+  return undefined;
+}
+
+function buildRainierBeachFitReason(name: string, summary: string): string {
+  const text = `${name} ${summary}`.toLowerCase();
+  if (/movie|talk|lecture|facial recognition|historic/i.test(text)) {
+    return "This draws civically engaged neighbors and creates a strong opening for issue education, partner outreach, and volunteer signups.";
+  }
+  if (/sale|market|stroll|social|jazz|garden|ice cream/i.test(text)) {
+    return "This is a neighborhood gathering where the organization can meet Rainier Valley residents face to face and invite them into its programs.";
+  }
+  return "This is a concrete local gathering the organization can use for in-person outreach, relationship-building, and community visibility.";
+}
+
+function parseRainierBeachCommunityClubEvents(html: string): VerifiedLocalEvent[] {
+  const events: VerifiedLocalEvent[] = [];
+  const matches = html.matchAll(/<h2[^>]*>\s*<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/h2>([\s\S]*?)(?=<h2[^>]*>|<\/main>)/gi);
+
+  for (const match of matches) {
+    const sourceUrl = match[1]?.trim();
+    const name = stripTags(match[2] ?? "");
+    const block = match[3] ?? "";
+    const date = stripTags(block.match(/<h4[^>]*>([\s\S]*?)<\/h4>/i)?.[1] ?? "");
+
+    if (!sourceUrl || !name || !date || !isUpcomingEvent(date)) continue;
+
+    const paragraphs = Array.from(block.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi), (item) => stripTags(item[1] ?? "")).filter(Boolean);
+    const listItems = Array.from(block.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi), (item) => stripTags(item[1] ?? "")).filter(Boolean);
+    const summary = normalizeWhitespace([...paragraphs, ...listItems].join(" "));
+    const venue = inferRainierBeachVenue(summary, sourceUrl);
+
+    events.push({
+      name,
+      date,
+      venue,
+      whyFit: buildRainierBeachFitReason(name, summary),
+      sourceUrl,
+      sourceLabel: "Rainier Beach Community Club",
+    });
+  }
+
+  return events.sort((a, b) => (parseEventTimestamp(a.date) ?? 0) - (parseEventTimestamp(b.date) ?? 0));
+}
+
+async function fetchVerifiedLocalEvents(location: string): Promise<VerifiedLocalEvent[]> {
+  const normalizedLocation = location.toLowerCase();
+
+  if (!/(rainier valley|rainier beach|98118)/i.test(normalizedLocation)) {
+    return [];
+  }
+
+  try {
+    const res = await fetch(RAINIER_BEACH_EVENTS_URL);
+    if (!res.ok) {
+      console.warn(`[fetchVerifiedLocalEvents] Rainier Beach Community Club fetch failed: ${res.status}`);
+      return [];
+    }
+
+    const html = await res.text();
+    const events = parseRainierBeachCommunityClubEvents(html);
+    console.log(`[fetchVerifiedLocalEvents] Parsed ${events.length} verified Rainier Beach events`);
+    return events;
+  } catch (error) {
+    console.error("[fetchVerifiedLocalEvents] Failed to fetch local events:", error);
+    return [];
+  }
+}
+
+function formatVerifiedEvents(events: VerifiedLocalEvent[]): string {
+  return events
+    .map((event) => {
+      const parts = [event.name, event.date, event.venue, event.whyFit, `Source: ${event.sourceUrl}`].filter(Boolean);
+      return `- ${parts.join(" — ")}`;
+    })
+    .join("\n");
+}
+
+function countStrategiesUsingEvents(plan: OutreachPlan, eventNames: string[]): number {
+  const loweredEventNames = eventNames.map((name) => name.toLowerCase());
+
+  return plan.strategies.filter((strategy) => {
+    const haystack = `${strategy.title} ${strategy.why} ${strategy.steps.join(" ")}`.toLowerCase();
+    return loweredEventNames.some((eventName) => haystack.includes(eventName));
+  }).length;
+}
+
+async function revisePlanToUseEvents(
+  plan: OutreachPlan,
+  business: z.infer<typeof businessSchema>,
+  audience: string,
+  liveEventsText: string,
+  eventNames: string[]
+): Promise<OutreachPlan> {
+  const result = await callAI(
+    [
+      {
+        role: "system",
+        content: `You are revising a non-profit outreach plan. Keep the plan practical and specific, but make sure at least 2 of the 5 strategies explicitly reference real event names from the verified local events list. The event name must appear in the strategy title or steps. Do not invent event details beyond what is listed.`,
+      },
+      {
+        role: "user",
+        content: `Organization: ${business.name}\nCause area: ${business.industry}\nMission: ${business.description}\nAudience this week: ${audience}\n${business.location ? `Location: ${business.location}\n` : ""}\nVerified local events:\n${liveEventsText}\n\nEvent names that must appear in at least 2 strategies: ${eventNames.join(", ")}\n\nCurrent plan JSON:\n${JSON.stringify(plan, null, 2)}\n\nReturn a revised version of the plan with the same JSON schema and exactly 5 strategies.`,
+      },
+    ],
+    {
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "submit_outreach_plan",
+            description: "Submit a weekly outreach plan with 5 strategies",
+            parameters: {
+              type: "object",
+              properties: {
+                intro: { type: "string", description: "1-2 warm sentences introducing this week's focus" },
+                strategies: {
+                  type: "array",
+                  minItems: 5,
+                  maxItems: 5,
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string", description: "Short action-oriented title" },
+                      category: { type: "string", enum: ["partnership", "community", "content", "direct", "referral", "event"] },
+                      why: { type: "string", description: "1 sentence: why this works for them" },
+                      steps: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 4, description: "Concrete steps to take" },
+                      time_estimate: { type: "string", description: "e.g. '30 min', '1 hour'" },
+                    },
+                    required: ["title", "category", "why", "steps", "time_estimate"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["intro", "strategies"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "submit_outreach_plan" } },
+    }
+  );
+
+  const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+  if (!toolCall?.function?.arguments) {
+    throw new Error("AI did not return a revised plan. Please try again.");
+  }
+
+  return JSON.parse(toolCall.function.arguments) as OutreachPlan;
+}
+
 function buildResourceSection(resources: Array<{ name: string; text: string }> | undefined): string {
   if (!resources || resources.length === 0) return "";
   // Fair-share budget per resource
