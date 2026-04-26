@@ -49,6 +49,7 @@ function SettingsPage() {
         target_audience: form.target_audience,
         brand_voice: form.brand_voice,
         location: form.location,
+        website: form.website,
         goals: form.goals,
       })
       .eq("user_id", user.id);
