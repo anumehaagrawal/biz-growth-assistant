@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Send, Bookmark, Sparkles, Loader2 } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { Heart, MessageCircle, Send, Bookmark, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
