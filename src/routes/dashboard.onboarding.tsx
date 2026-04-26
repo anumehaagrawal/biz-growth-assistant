@@ -73,7 +73,13 @@ function Onboarding() {
           </div>
           <div>
             <Label htmlFor="location">Location (optional)</Label>
-            <Input id="location" value={form.location} onChange={(e) => update("location", e.target.value)} className="mt-1.5" placeholder="Brooklyn, NY" />
+            <LocationAutocomplete
+              id="location"
+              value={form.location}
+              onChange={(v) => update("location", v)}
+              placeholder="Brooklyn, NY"
+              className="mt-1.5"
+            />
           </div>
         </div>
 
