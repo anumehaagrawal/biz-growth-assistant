@@ -331,7 +331,58 @@ function ContentPage() {
                 <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy
               </Button>
             </div>
+            {imageUrl && contentType === "email" && (
+              <img
+                src={imageUrl}
+                alt="Today's moment"
+                className="mb-4 max-h-80 w-full rounded-2xl object-cover"
+              />
+            )}
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink">{latest}</pre>
+
+            {contentType === "email" && (
+              <div className="mt-5 space-y-3 border-t border-border pt-5">
+                <div>
+                  <Label>Send to parents</Label>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5 focus-within:ring-2 focus-within:ring-ring">
+                    {emails.map((e) => (
+                      <Badge key={e} variant="secondary" className="gap-1">
+                        {e}
+                        <button
+                          type="button"
+                          onClick={() => setEmails(emails.filter((x) => x !== e))}
+                          className="ml-0.5 text-muted-foreground hover:text-ink"
+                          aria-label={`Remove ${e}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <input
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={onEmailKeyDown}
+                      onBlur={addEmail}
+                      placeholder={emails.length ? "" : "parent@example.com, ..."}
+                      className="min-w-[180px] flex-1 bg-transparent text-sm outline-none"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Press Enter or comma to add. Recipients are BCC'd to keep parents private. Opens your mail app — the photo is included as a link inline.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={sendEmail}
+                  disabled={emails.length === 0}
+                  className="w-full rounded-full shadow-warm"
+                  size="lg"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Send to {emails.length || 0} {emails.length === 1 ? "parent" : "parents"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
