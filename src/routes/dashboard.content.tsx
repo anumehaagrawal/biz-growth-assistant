@@ -64,7 +64,14 @@ function ContentPage() {
     setGenerating(true);
     setLatest(null);
     try {
-      const { data: business } = await supabase.from("businesses").select("*").eq("user_id", user.id).single();
+      const [{ data: business }, { data: resources }] = await Promise.all([
+        supabase.from("businesses").select("*").eq("user_id", user.id).single(),
+        supabase
+          .from("org_resources")
+          .select("name,extracted_text")
+          .eq("user_id", user.id)
+          .eq("status", "ready"),
+      ]);
       if (!business) throw new Error("Business profile not found");
 
       const { output } = await generateFn({
@@ -77,10 +84,14 @@ function ContentPage() {
             brand_voice: business.brand_voice,
             goals: business.goals,
             location: business.location,
+            website: business.website,
           },
           contentType,
           topic,
           platform: contentType === "social" ? platform : undefined,
+          resources: (resources ?? [])
+            .filter((r) => r.extracted_text && r.extracted_text.length > 0)
+            .map((r) => ({ name: r.name, text: r.extracted_text })),
         },
       });
 
