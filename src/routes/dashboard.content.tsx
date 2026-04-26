@@ -26,7 +26,7 @@ function ContentPage() {
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [history, setHistory] = useState<ContentPiece[]>([]);
+  
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
 
