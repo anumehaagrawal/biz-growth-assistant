@@ -347,10 +347,11 @@ export const generateContent = createServerFn({ method: "POST" })
       topic: z.string().min(1).max(1000),
       platform: z.string().max(50).optional(),
       resources: z.array(resourceSchema).max(20).optional(),
+      imageUrl: z.string().url().max(2000).optional(),
     })
   )
   .handler(async ({ data }) => {
-    const { business, contentType, topic, platform, resources } = data;
+    const { business, contentType, topic, platform, resources, imageUrl } = data;
 
     const formatGuide = {
       social: `a ${platform || "Instagram"} post for a non-profit (caption + 5-10 relevant hashtags). Make it human and emotionally resonant — the goal is to inspire action (donate, volunteer, share, advocate). ${platform === "linkedin" ? "Lean professional and impact-focused." : "Keep it warm, vivid, and scroll-stopping."}`,
@@ -369,11 +370,22 @@ ${business.goals ? `Current mission goals: ${business.goals}` : ""}
 
 Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.${buildResourceSection(resources)}`;
 
-    const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
+    const imageInstruction = imageUrl
+      ? "\n\nAn image is attached. Look carefully at it and ground the writing in what you can actually see — the people, setting, mood, and details. Weave it naturally into the story."
+      : "";
+
+    const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}${imageInstruction}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
+
+    const userContent: any = imageUrl
+      ? [
+          { type: "text", text: userPrompt },
+          { type: "image_url", image_url: { url: imageUrl } },
+        ]
+      : userPrompt;
 
     const result = await callAI([
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: "user", content: userContent },
     ]);
 
     const output = result.choices?.[0]?.message?.content?.trim() ?? "";
