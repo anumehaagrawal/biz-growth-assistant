@@ -157,8 +157,8 @@ function ContentPage() {
   };
 
   const generate = async () => {
-    if (!user || !topic.trim() || contentType === "post") return;
-    const ct = contentType;
+    if (!user || !topic.trim() || contentType === "post" || contentType === "generator") return;
+    const ct = contentType as "social" | "email" | "blog";
     setGenerating(true);
     setLatest(null);
     try {
