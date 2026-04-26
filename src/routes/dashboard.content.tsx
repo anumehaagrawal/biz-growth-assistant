@@ -125,7 +125,7 @@ function ContentPage() {
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+    <div className="mx-auto max-w-3xl">
       <div>
         <h1 className="font-display text-4xl text-ink">Tell your story</h1>
         <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
