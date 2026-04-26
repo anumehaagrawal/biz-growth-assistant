@@ -97,7 +97,7 @@ function ContentPage() {
         data: {
           business: {
             name: business.name,
-            industry: business.industry,
+            industry: business.industry?.trim() || "general",
             description: business.description,
             target_audience: business.target_audience,
             brand_voice: business.brand_voice,
