@@ -169,7 +169,7 @@ function Landing() {
               {[
                 "Knows your mission — upload your website, annual report, or one-pagers and we write from your real materials.",
                 "Writes in plain, warm language for the families you actually serve.",
-                "Generates a weekly outreach plan with five concrete moves — partnerships, schools, community visits.",
+                "Generates a weekly recommendations with five concrete moves — partnerships, schools, community visits.",
                 "Tracks first-time visitors and reminds you who needs a 48-hour follow-up.",
               ].map((line) => (
                 <li key={line} className="flex gap-2">
