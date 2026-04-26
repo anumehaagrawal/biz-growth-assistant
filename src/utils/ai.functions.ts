@@ -103,11 +103,11 @@ Write content that sounds genuinely human and mission-driven — never generic A
   });
 
 export const generateOutreachPlan = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ business: businessSchema }))
+  .inputValidator(z.object({ business: businessSchema, resources: z.array(resourceSchema).max(20).optional() }))
   .handler(async ({ data }) => {
-    const { business } = data;
+    const { business, resources } = data;
 
-    const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community. Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice.`;
+    const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community. Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice. When reference materials are provided, ground every strategy in real programs, partners, audiences, or wins from those materials — never invent.${buildResourceSection(resources)}`;
 
     const userPrompt = `Create this week's outreach plan for:
 
