@@ -22,11 +22,14 @@ export const Route = createFileRoute("/dashboard/content")({
 function ContentPage() {
   const { user } = useAuth();
   const generateFn = useServerFn(generateContent);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [contentType, setContentType] = useState<"social" | "email" | "blog" | "post">("social");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  
+  const [emailImageUrl, setEmailImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
 
@@ -39,6 +42,34 @@ function ContentPage() {
       .eq("status", "ready")
       .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
+
+  const handleEmailImage = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image is too large (max 20MB)");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("post-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("post-media").getPublicUrl(path);
+      setEmailImageUrl(pub.publicUrl);
+      toast.success("Image attached");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const generate = async () => {
     if (!user || !topic.trim() || contentType === "post") return;
@@ -71,6 +102,7 @@ function ContentPage() {
           contentType: ct,
           topic,
           platform: ct === "social" ? platform : undefined,
+          imageUrl: ct === "email" && emailImageUrl ? emailImageUrl : undefined,
           resources: (resources ?? [])
             .filter((r) => r.extracted_text && r.extracted_text.length > 0)
             .map((r) => ({ name: r.name, text: r.extracted_text })),
@@ -83,7 +115,7 @@ function ContentPage() {
         content_type: ct,
         prompt: topic,
         output,
-        metadata: ct === "social" ? { platform } : {},
+        metadata: ct === "social" ? { platform } : ct === "email" && emailImageUrl ? { imageUrl: emailImageUrl } : {},
       });
       toast.success("Fresh content, ready to go!");
     } catch (e: any) {
