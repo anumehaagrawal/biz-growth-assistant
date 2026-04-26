@@ -3,10 +3,20 @@ import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
+import { supabase as supabaseBrowser } from './client'
 
-
-
-export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
+// Client-side companion: attaches the user's access token so the server-side
+// `requireSupabaseAuth` middleware can authenticate the request.
+export const requireSupabaseAuth = createMiddleware({ type: 'function' })
+  .client(async ({ next }) => {
+    const { data: { session } } = await supabaseBrowser.auth.getSession()
+    const headers: Record<string, string> = {}
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`
+    }
+    return next({ headers })
+  })
+  .server(
   async ({ next }) => {
     
     const SUPABASE_URL = process.env.SUPABASE_URL;
