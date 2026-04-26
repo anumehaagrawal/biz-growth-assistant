@@ -11,7 +11,26 @@ const businessSchema = z.object({
   brand_voice: z.string().min(1).max(100),
   goals: z.string().max(2000).optional().nullable(),
   location: z.string().max(200).optional().nullable(),
+  website: z.string().max(500).optional().nullable(),
 });
+
+const resourceSchema = z.object({
+  name: z.string().min(1).max(300),
+  text: z.string().min(1).max(40_000),
+});
+
+const TOTAL_RESOURCE_BUDGET = 60_000;
+
+function buildResourceSection(resources: Array<{ name: string; text: string }> | undefined): string {
+  if (!resources || resources.length === 0) return "";
+  // Fair-share budget per resource
+  const perItem = Math.floor(TOTAL_RESOURCE_BUDGET / resources.length);
+  const blocks = resources.map((r) => {
+    const snippet = r.text.length > perItem ? r.text.slice(0, perItem) + "\n[...truncated]" : r.text;
+    return `--- RESOURCE: ${r.name} ---\n${snippet}`;
+  });
+  return `\n\nREFERENCE MATERIALS from the organization (use the facts, language, programs, and tone from these — never invent statistics, quotes, or program names; if something isn't in the materials and you're unsure, keep it general rather than fabricate):\n\n${blocks.join("\n\n")}`;
+}
 
 async function callAI(messages: Array<{ role: string; content: string }>, opts: { tools?: any[]; tool_choice?: any } = {}) {
   const apiKey = process.env.LOVABLE_API_KEY;
