@@ -8,10 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bloom — Marketing for non-profits with heart" },
-      { name: "description", content: "AI-powered storytelling and weekly outreach plans built for non-profits, charities, and mission-driven organizations." },
-      { property: "og:title", content: "Bloom — Marketing for non-profits with heart" },
-      { property: "og:description", content: "AI-powered storytelling and weekly outreach plans built for mission-driven organizations." },
+      { title: "Rainier Valley Club Connect" },
+      {
+        name: "description",
+        content: "A lightweight outreach system for Rainier Valley Boys & Girls Club staff.",
+      },
+      { property: "og:title", content: "Rainier Valley Club Connect" },
+      {
+        property: "og:description",
+        content:
+          "Turn everyday Club moments into family-facing outreach, visits, and supported signup.",
+      },
     ],
   }),
   component: Landing,
@@ -33,14 +40,16 @@ function Landing() {
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-2xl font-semibold text-ink">Bloom</span>
+          <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
         </Link>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost">
             <Link to="/auth">Sign in</Link>
           </Button>
           <Button asChild>
-            <Link to="/auth" search={{ mode: "signup" }}>Get started</Link>
+            <Link to="/auth" search={{ mode: "signup" }}>
+              Get started
+            </Link>
           </Button>
         </div>
       </header>
@@ -50,23 +59,25 @@ function Landing() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
             <span className="h-2 w-2 rounded-full bg-clay animate-pulse" />
-            Built for non-profits & mission-driven teams
+            Built for Rainier Valley Boys & Girls Club
           </div>
           <h1 className="mt-5 font-display text-5xl leading-[1.05] tracking-tight text-ink text-balance md:text-6xl">
-            Tell your mission's story{" "}
-            <span className="italic text-primary">with heart.</span>
+            Make every Club moment easy to share.
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground text-balance">
-            Bloom is an AI marketing partner for non-profits. Write donor appeals, volunteer call-outs, and social posts in seconds — and get a fresh weekly outreach plan tailored to your cause.
+            Club Connect helps busy staff turn after-school activities into social posts, flyers,
+            school blurbs, parent messages, QR cards, and follow-up next steps.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="rounded-full shadow-warm">
               <Link to="/auth" search={{ mode: "signup" }}>
-                Grow your impact — it's free
+                Open staff dashboard
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
-            <span className="text-sm text-muted-foreground">No credit card required</span>
+            <span className="text-sm text-muted-foreground">
+              Visit-first outreach for local families
+            </span>
           </div>
         </div>
 
@@ -88,18 +99,18 @@ function Landing() {
           {[
             {
               icon: MessageCircle,
-              title: "Stories that move people",
-              body: "Donor appeals, volunteer call-outs, newsletters, and social posts — written in your organization's voice.",
+              title: "Outreach kits in minutes",
+              body: "Create captions, flyer copy, school newsletter blurbs, parent messages, QR card text, and short program descriptions.",
             },
             {
               icon: Calendar,
-              title: "A new outreach plan weekly",
-              body: "Five concrete moves every week to grow donors, volunteers, and partnerships in your community.",
+              title: "A local family page",
+              body: "Send families to a Rainier Valley page that shows what happens after school before asking them to enroll.",
             },
             {
               icon: Sparkles,
-              title: "Onboard once, grow forever",
-              body: "Tell us about your mission once. Bloom remembers and keeps every word on-brand.",
+              title: "Warm follow-up",
+              body: "Track first visits and create low-pressure follow-up messages that help families come back and get signup help.",
             },
           ].map((f) => (
             <div
@@ -117,7 +128,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground">
-        Made with care · Bloom for Non-Profits
+        Rainier Valley Club Connect
       </footer>
     </div>
   );

@@ -11,9 +11,17 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ mode: z.enum(["signin", "signup"]).optional() }),
-  head: () => ({ meta: [{ title: "Sign in — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Club Connect" }] }),
   component: AuthPage,
 });
+
+const passwordHelp = "Use at least 8 characters with uppercase, lowercase, and a number.";
+
+function isStrongEnough(password: string) {
+  return (
+    password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /\d/.test(password)
+  );
+}
 
 function AuthPage() {
   const { mode: initialMode } = Route.useSearch();
@@ -31,6 +39,10 @@ function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !isStrongEnough(password)) {
+      toast.error(passwordHelp);
+      return;
+    }
     setSubmitting(true);
     try {
       if (mode === "signup") {
@@ -44,15 +56,18 @@ function AuthPage() {
         });
         if (error) throw error;
         if (data.session) {
-          toast.success("Welcome to Bloom! Let's set up your business.");
+          toast.success("Welcome to Club Connect. Let's set up the Club profile.");
         } else {
           // No session = email confirmation required. Try signing in immediately.
-          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
           if (signInError) {
             toast.success("Account created! Please check your email to confirm, then sign in.");
             setMode("signin");
           } else {
-            toast.success("Welcome to Bloom!");
+            toast.success("Welcome to Club Connect.");
           }
         }
       } else {
@@ -60,13 +75,15 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Welcome back!");
       }
-    } catch (err: any) {
-      const msg = err?.message ?? "Something went wrong";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
       if (msg.toLowerCase().includes("invalid login")) {
         toast.error("Email or password is incorrect. New here? Create an account first.");
       } else if (msg.toLowerCase().includes("already registered")) {
         toast.error("This email is already registered. Try signing in instead.");
         setMode("signin");
+      } else if (msg.toLowerCase().includes("weak") || msg.toLowerCase().includes("password")) {
+        toast.error(passwordHelp);
       } else {
         toast.error(msg);
       }
@@ -82,7 +99,7 @@ function AuthPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-2xl font-semibold text-ink">Bloom</span>
+          <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
         </Link>
 
         <div className="rounded-3xl border border-border bg-card p-8 shadow-soft">
@@ -91,8 +108,8 @@ function AuthPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "signup"
-              ? "A warm, AI-powered marketing partner for your non-profit is one step away."
-              : "Sign in to keep growing your mission's impact."}
+              ? "Create a staff account for the Rainier Valley outreach prototype."
+              : "Sign in to create outreach kits and track warm follow-up."}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -129,12 +146,20 @@ function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="mt-1.5"
                 placeholder="••••••••"
               />
+              {mode === "signup" && (
+                <p className="mt-1.5 text-xs text-muted-foreground">{passwordHelp}</p>
+              )}
             </div>
-            <Button type="submit" className="w-full rounded-full shadow-warm" size="lg" disabled={submitting}>
+            <Button
+              type="submit"
+              className="w-full rounded-full shadow-warm"
+              size="lg"
+              disabled={submitting}
+            >
               {submitting ? "Just a moment..." : mode === "signup" ? "Create account" : "Sign in"}
             </Button>
           </form>

@@ -4,36 +4,60 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/dashboard/settings")({
-  head: () => ({ meta: [{ title: "Organization settings — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Organization settings — Club Connect" }] }),
   component: SettingsPage,
 });
 
 const CAUSE_AREAS = [
-  "Education", "Health & wellbeing", "Poverty & food security", "Housing & homelessness",
-  "Environment & climate", "Animal welfare", "Arts & culture", "Human rights & advocacy",
-  "Youth & families", "Refugees & migration", "Mental health", "Disability & inclusion",
-  "Community development", "Faith & spirituality", "Other",
+  "Education",
+  "Health & wellbeing",
+  "Poverty & food security",
+  "Housing & homelessness",
+  "Environment & climate",
+  "Animal welfare",
+  "Arts & culture",
+  "Human rights & advocacy",
+  "Youth & families",
+  "Refugees & migration",
+  "Mental health",
+  "Disability & inclusion",
+  "Community development",
+  "Faith & spirituality",
+  "Other",
 ];
 
 function SettingsPage() {
   const { user } = useAuth();
-  const [form, setForm] = useState<any>(null);
+  const [form, setForm] = useState<Tables<"businesses"> | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("businesses").select("*").eq("user_id", user.id).single().then(({ data }) => setForm(data));
+    supabase
+      .from("businesses")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => setForm(data));
   }, [user]);
 
-  const update = (k: string, v: string) => setForm((f: any) => ({ ...f, [k]: v }));
+  const update = (key: keyof Tables<"businesses">, value: string) =>
+    setForm((current) => (current ? { ...current, [key]: value } : current));
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,26 +81,45 @@ function SettingsPage() {
   };
 
   if (!form) {
-    return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-4xl text-ink">Your organization</h1>
-      <p className="mt-2 text-muted-foreground">Keep this fresh — Bloom uses it for everything it writes.</p>
+      <p className="mt-2 text-muted-foreground">
+        Keep this fresh so outreach stays specific to Rainier Valley families.
+      </p>
 
-      <form onSubmit={save} className="mt-6 space-y-5 rounded-3xl border border-border bg-card p-8 shadow-soft">
+      <form
+        onSubmit={save}
+        className="mt-6 space-y-5 rounded-3xl border border-border bg-card p-8 shadow-soft"
+      >
         <div className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
             <Label>Organization name</Label>
-            <Input value={form.name} onChange={(e) => update("name", e.target.value)} className="mt-1.5" />
+            <Input
+              value={form.name}
+              onChange={(e) => update("name", e.target.value)}
+              className="mt-1.5"
+            />
           </div>
           <div>
             <Label>Cause area</Label>
             <Select value={form.industry} onValueChange={(v) => update("industry", v)}>
-              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {CAUSE_AREAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {CAUSE_AREAS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -92,16 +135,28 @@ function SettingsPage() {
 
         <div>
           <Label>Your mission</Label>
-          <Textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} className="mt-1.5" />
+          <Textarea
+            value={form.description}
+            onChange={(e) => update("description", e.target.value)}
+            rows={3}
+            className="mt-1.5"
+          />
         </div>
         <div>
-          <Label>Who you want to reach (donors, volunteers, beneficiaries...)</Label>
-          <Textarea value={form.target_audience} onChange={(e) => update("target_audience", e.target.value)} rows={2} className="mt-1.5" />
+          <Label>Who you want to reach</Label>
+          <Textarea
+            value={form.target_audience}
+            onChange={(e) => update("target_audience", e.target.value)}
+            rows={2}
+            className="mt-1.5"
+          />
         </div>
         <div>
           <Label>Brand voice</Label>
           <Select value={form.brand_voice} onValueChange={(v) => update("brand_voice", v)}>
-            <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="mt-1.5">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="warm">Warm & heartfelt</SelectItem>
               <SelectItem value="hopeful">Hopeful & uplifting</SelectItem>
@@ -113,8 +168,13 @@ function SettingsPage() {
           </Select>
         </div>
         <div>
-          <Label>Mission goals this season</Label>
-          <Textarea value={form.goals ?? ""} onChange={(e) => update("goals", e.target.value)} rows={2} className="mt-1.5" />
+          <Label>Enrollment and outreach goals</Label>
+          <Textarea
+            value={form.goals ?? ""}
+            onChange={(e) => update("goals", e.target.value)}
+            rows={2}
+            className="mt-1.5"
+          />
         </div>
 
         <Button type="submit" size="lg" className="rounded-full shadow-warm" disabled={saving}>

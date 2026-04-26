@@ -10,17 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ClubRouteImport } from './routes/club'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardOutreachRouteImport } from './routes/dashboard.outreach'
 import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
+import { Route as DashboardFollowUpRouteImport } from './routes/dashboard.follow-up'
 import { Route as DashboardContentRouteImport } from './routes/dashboard.content'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClubRoute = ClubRouteImport.update({
+  id: '/club',
+  path: '/club',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -53,6 +60,11 @@ const DashboardOnboardingRoute = DashboardOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardFollowUpRoute = DashboardFollowUpRouteImport.update({
+  id: '/follow-up',
+  path: '/follow-up',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardContentRoute = DashboardContentRouteImport.update({
   id: '/content',
   path: '/content',
@@ -62,8 +74,10 @@ const DashboardContentRoute = DashboardContentRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/club': typeof ClubRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -72,7 +86,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/club': typeof ClubRoute
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -82,8 +98,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/club': typeof ClubRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/follow-up': typeof DashboardFollowUpRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -94,8 +112,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/club'
     | '/dashboard'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -104,7 +124,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/club'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -113,8 +135,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/club'
     | '/dashboard'
     | '/dashboard/content'
+    | '/dashboard/follow-up'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
@@ -124,6 +148,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ClubRoute: typeof ClubRoute
   DashboardRoute: typeof DashboardRouteWithChildren
 }
 
@@ -134,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/club': {
+      id: '/club'
+      path: '/club'
+      fullPath: '/club'
+      preLoaderRoute: typeof ClubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -178,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardOnboardingRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/follow-up': {
+      id: '/dashboard/follow-up'
+      path: '/follow-up'
+      fullPath: '/dashboard/follow-up'
+      preLoaderRoute: typeof DashboardFollowUpRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/content': {
       id: '/dashboard/content'
       path: '/content'
@@ -190,6 +229,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardContentRoute: typeof DashboardContentRoute
+  DashboardFollowUpRoute: typeof DashboardFollowUpRoute
   DashboardOnboardingRoute: typeof DashboardOnboardingRoute
   DashboardOutreachRoute: typeof DashboardOutreachRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
@@ -198,6 +238,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardContentRoute: DashboardContentRoute,
+  DashboardFollowUpRoute: DashboardFollowUpRoute,
   DashboardOnboardingRoute: DashboardOnboardingRoute,
   DashboardOutreachRoute: DashboardOutreachRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
@@ -211,8 +252,18 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ClubRoute: ClubRoute,
   DashboardRoute: DashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
