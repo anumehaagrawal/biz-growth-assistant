@@ -132,7 +132,7 @@ export function ResourceManager() {
           <Globe className="h-3.5 w-3.5" /> Fetch your website
         </Label>
         <p className="mt-1 text-xs text-muted-foreground">
-          Paste your homepage — Bloom will read every page on your site and use them all as context.
+          Paste your homepage — Club Connect will read every page on your site and use them all as context.
         </p>
         <div className="mt-2 flex gap-2">
           <Input
@@ -176,7 +176,7 @@ export function ResourceManager() {
           <Upload className="h-3.5 w-3.5" /> Upload resource files
         </Label>
         <p className="mt-1 text-xs text-muted-foreground">
-          PDFs, Word docs, or text files (max 10 MB each). Annual reports, mission docs, brochures, program one-pagers — anything that helps Bloom write in your voice.
+          PDFs, Word docs, or text files (max 10 MB each). Annual reports, mission docs, brochures, program one-pagers — anything that helps Club Connect write in your voice.
         </p>
         <button
           type="button"
@@ -233,7 +233,7 @@ export function ResourceManager() {
           <div className="py-6 text-center text-sm text-muted-foreground">Loading…</div>
         ) : resources.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-            No resources yet. Add some so Bloom can write from your real materials.
+            No resources yet. Add some so Club Connect can write from your real materials.
           </div>
         ) : (
           <ul className="space-y-2">
