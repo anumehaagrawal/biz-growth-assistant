@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateContent } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Copy, Trash2, Loader2, Instagram, Mail, FileText, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
 
 export const Route = createFileRoute("/dashboard/content")({
