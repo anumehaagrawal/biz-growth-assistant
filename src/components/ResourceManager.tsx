@@ -259,7 +259,10 @@ export function ResourceManager() {
                     )}
                     {r.status === "ready" && (
                       <span className="flex items-center gap-1 text-emerald-600">
-                        <CheckCircle2 className="h-3 w-3" /> Ready · {r.char_count.toLocaleString()} chars
+                        <CheckCircle2 className="h-3 w-3" />
+                        {r.kind === "website" && r.metadata?.pagesCrawled
+                          ? `${r.metadata.pagesCrawled} ${r.metadata.pagesCrawled === 1 ? "page" : "pages"} · ${(r.char_count / 1000).toFixed(1)}k chars`
+                          : `Ready · ${r.char_count.toLocaleString()} chars`}
                       </span>
                     )}
                     {r.status === "failed" && (
@@ -269,6 +272,18 @@ export function ResourceManager() {
                     )}
                   </div>
                 </div>
+                {r.kind === "website" && r.source_url && r.status !== "processing" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRecrawl(r)}
+                    disabled={fetchingUrl}
+                    aria-label={`Re-crawl ${r.name}`}
+                    title="Re-crawl this site"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${fetchingUrl ? "animate-spin" : ""}`} />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
