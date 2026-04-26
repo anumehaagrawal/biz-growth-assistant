@@ -371,7 +371,7 @@ ${business.goals ? `Current mission goals: ${business.goals}` : ""}
 Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.${buildResourceSection(resources)}`;
 
     const imageInstruction = imageUrl
-      ? "\n\nAn image is attached. Look carefully at it and ground the writing in what you can actually see — the people, setting, mood, and details. Weave it naturally into the story."
+      ? "\n\nAn image is attached. Look carefully at it and ground the writing ONLY in what you can actually see — the people, activity, setting, mood, and details. Do NOT invent activities, names, or events that are not visible. If something is unclear, keep the description gentle and general rather than guessing."
       : "";
 
     const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}${imageInstruction}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
