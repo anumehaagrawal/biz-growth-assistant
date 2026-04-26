@@ -5,13 +5,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateContent } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X } from "lucide-react";
+import { z } from "zod";
+import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
+
+const emailSchema = z.string().trim().email();
 
 export const Route = createFileRoute("/dashboard/content")({
   head: () => ({ meta: [{ title: "Create content — Bloom" }] }),
