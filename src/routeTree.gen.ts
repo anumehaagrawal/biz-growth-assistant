@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as SignupCodeRouteImport } from './routes/signup.$code'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardOutreachRouteImport } from './routes/dashboard.outreach'
@@ -45,6 +46,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
+} as any)
+const SignupCodeRoute = SignupCodeRouteImport.update({
+  id: '/signup/$code',
+  path: '/signup/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/p/$slug': typeof PSlugRoute
+  '/signup/$code': typeof SignupCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/p/$slug': typeof PSlugRoute
+  '/signup/$code': typeof SignupCodeRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/p/$slug': typeof PSlugRoute
+  '/signup/$code': typeof SignupCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/dashboard/outreach'
     | '/dashboard/settings'
     | '/p/$slug'
+    | '/signup/$code'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/dashboard/outreach'
     | '/dashboard/settings'
     | '/p/$slug'
+    | '/signup/$code'
     | '/dashboard'
   id:
     | '__root__'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/dashboard/outreach'
     | '/dashboard/settings'
     | '/p/$slug'
+    | '/signup/$code'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   PostsRoute: typeof PostsRoute
   PSlugRoute: typeof PSlugRoute
+  SignupCodeRoute: typeof SignupCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/signup/$code': {
+      id: '/signup/$code'
+      path: '/signup/$code'
+      fullPath: '/signup/$code'
+      preLoaderRoute: typeof SignupCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/p/$slug': {
       id: '/p/$slug'
@@ -275,7 +295,17 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   PostsRoute: PostsRoute,
   PSlugRoute: PSlugRoute,
+  SignupCodeRoute: SignupCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

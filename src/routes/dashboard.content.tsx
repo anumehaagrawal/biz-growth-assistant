@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,10 +16,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 import {
   Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send,
-  Wand2, Clipboard, MessageSquare, Newspaper, QrCode,
+  Wand2, Clipboard, MessageSquare, Newspaper, QrCode, Download, Facebook, ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
+import { downloadFlyerPdf } from "@/utils/flyerPdf";
 
 const emailSchema = z.string().trim().email();
 
@@ -74,9 +76,117 @@ function ContentPage() {
   const [activityForm, setActivityForm] = useState<ActivityForm>(defaultActivityForm);
   const [kitGenerating, setKitGenerating] = useState(false);
   const [latestKit, setLatestKit] = useState<OutreachKit | null>(null);
+  const [eventImageUrl, setEventImageUrl] = useState<string | null>(null);
+  const [uploadingEventImage, setUploadingEventImage] = useState(false);
+  const eventImageInputRef = useRef<HTMLInputElement>(null);
+  const [signupQrUrl, setSignupQrUrl] = useState<string | null>(null);
+  const [signupQrDataUrl, setSignupQrDataUrl] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const updateActivity = (key: keyof ActivityForm, value: string) =>
     setActivityForm((current) => ({ ...current, [key]: value }));
+
+  const handleEventImage = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image is too large (max 20MB)");
+      return;
+    }
+    setUploadingEventImage(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${user.id}/event-${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("post-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("post-media").getPublicUrl(path);
+      setEventImageUrl(pub.publicUrl);
+      toast.success("Event image attached");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploadingEventImage(false);
+    }
+  };
+
+  const generateSignupQr = async () => {
+    if (!user) return;
+    // Use the staff user_id as the kit_code so signups attribute back to this staff member
+    const url = `${window.location.origin}/signup/${user.id}`;
+    try {
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 512,
+        margin: 2,
+        color: { dark: "#004B87", light: "#FFFFFF" },
+      });
+      setSignupQrUrl(url);
+      setSignupQrDataUrl(dataUrl);
+      toast.success("Signup QR ready");
+    } catch (e: any) {
+      toast.error("Couldn't make QR code");
+    }
+  };
+
+  const downloadSignupQr = () => {
+    if (!signupQrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = signupQrDataUrl;
+    a.download = `club-signup-qr.png`;
+    a.click();
+  };
+
+  const downloadFlyer = async () => {
+    if (!latestKit) return;
+    setGeneratingPdf(true);
+    try {
+      const { data: business } = await supabase
+        .from("businesses").select("name").eq("user_id", user!.id).single();
+      // Auto-generate QR if missing
+      let qrData = signupQrDataUrl;
+      let qrUrl = signupQrUrl;
+      if (!qrData && user) {
+        qrUrl = `${window.location.origin}/signup/${user.id}`;
+        qrData = await QRCode.toDataURL(qrUrl, {
+          width: 512,
+          margin: 2,
+          color: { dark: "#004B87", light: "#FFFFFF" },
+        });
+        setSignupQrUrl(qrUrl);
+        setSignupQrDataUrl(qrData);
+      }
+      await downloadFlyerPdf({
+        orgName: business?.name ?? "Boys & Girls Club",
+        program: activityForm.program,
+        schedule: activityForm.schedule,
+        flyerCopy: latestKit.flyer_copy,
+        imageUrl: eventImageUrl,
+        qrDataUrl: qrData,
+        qrCaption: qrUrl ?? undefined,
+      });
+      toast.success("Flyer downloaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Couldn't generate PDF");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const postToInstagram = (caption: string) => {
+    navigator.clipboard.writeText(caption);
+    toast.success("Caption copied — paste it in Instagram");
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  };
+
+  const postToFacebook = (caption: string) => {
+    navigator.clipboard.writeText(caption);
+    toast.success("Caption copied — paste it in Facebook");
+    window.open("https://www.facebook.com/", "_blank", "noopener,noreferrer");
+  };
 
   const generateKit = async () => {
     if (!user || !activityForm.program.trim() || !activityForm.schedule.trim()) return;
@@ -368,6 +478,47 @@ function ContentPage() {
                     maxLength={500}
                   />
                 </div>
+                <div className="md:col-span-2">
+                  <Label>Event image (for the printable flyer)</Label>
+                  {eventImageUrl ? (
+                    <div className="mt-1.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
+                      <img src={eventImageUrl} alt="Event" className="h-20 w-20 rounded-lg object-cover" />
+                      <div className="flex-1 text-xs text-muted-foreground">This image will appear on the PDF flyer.</div>
+                      <Button variant="ghost" size="sm" onClick={() => setEventImageUrl(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                        disabled={uploadingEventImage}
+                        onClick={() => eventImageInputRef.current?.click()}
+                      >
+                        {uploadingEventImage ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
+                        ) : (
+                          <><Upload className="mr-2 h-4 w-4" />Upload event image</>
+                        )}
+                      </Button>
+                      <input
+                        ref={eventImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleEventImage(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <p className="mt-1.5 text-xs text-muted-foreground">Optional. PNG or JPG, up to 20MB.</p>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button
                 onClick={generateKit}
@@ -384,20 +535,93 @@ function ContentPage() {
 
               {latestKit && (
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {kitSections.map(({ key, label, icon: Icon }) => (
-                    <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-primary" />
-                          <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                  {kitSections.map(({ key, label, icon: Icon }) => {
+                    const text = latestKit[key];
+                    const isFlyer = key === "flyer_copy";
+                    const isSocial = key === "social_caption";
+                    const isQrCard = key === "qr_card_text";
+                    return (
+                      <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-primary" />
+                            <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => copy(text)}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => copy(latestKit[key])}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{latestKit[key]}</p>
-                    </article>
-                  ))}
+
+                        {isFlyer && eventImageUrl && (
+                          <img src={eventImageUrl} alt="Event" className="mt-3 max-h-44 w-full rounded-lg object-cover" />
+                        )}
+
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{text}</p>
+
+                        {isFlyer && (
+                          <Button
+                            onClick={downloadFlyer}
+                            disabled={generatingPdf}
+                            size="sm"
+                            className="mt-4 w-full rounded-full"
+                          >
+                            {generatingPdf ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building PDF...</>
+                            ) : (
+                              <><Download className="mr-2 h-4 w-4" />Download printable flyer (PDF)</>
+                            )}
+                          </Button>
+                        )}
+
+                        {isSocial && (
+                          <div className="mt-4 grid grid-cols-2 gap-2">
+                            <Button onClick={() => postToInstagram(text)} size="sm" variant="outline" className="rounded-full">
+                              <Instagram className="mr-1.5 h-4 w-4" /> Post on Instagram
+                            </Button>
+                            <Button onClick={() => postToFacebook(text)} size="sm" variant="outline" className="rounded-full">
+                              <Facebook className="mr-1.5 h-4 w-4" /> Post on Facebook
+                            </Button>
+                            <p className="col-span-2 text-[11px] text-muted-foreground">
+                              Caption is copied to your clipboard, then we open the app — paste & post.
+                            </p>
+                          </div>
+                        )}
+
+                        {isQrCard && (
+                          <div className="mt-4 space-y-2">
+                            {!signupQrDataUrl ? (
+                              <Button onClick={generateSignupQr} size="sm" className="w-full rounded-full">
+                                <QrCode className="mr-2 h-4 w-4" /> Generate sign-up QR code
+                              </Button>
+                            ) : (
+                              <div className="rounded-xl border border-border bg-secondary/40 p-3">
+                                <div className="flex items-start gap-3">
+                                  <img src={signupQrDataUrl} alt="Sign-up QR" className="h-24 w-24 rounded-md bg-white p-1" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-ink">Quick sign-up link</p>
+                                    <a href={signupQrUrl!} target="_blank" rel="noopener noreferrer" className="mt-0.5 block truncate text-xs text-primary underline">
+                                      {signupQrUrl}
+                                    </a>
+                                    <p className="mt-1 text-[11px] text-muted-foreground">
+                                      Families scan → fill child + parent name → get a QR to show at the Club.
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                  <Button onClick={downloadSignupQr} size="sm" variant="outline" className="rounded-full">
+                                    <Download className="mr-1.5 h-4 w-4" /> Download QR
+                                  </Button>
+                                  <a href={signupQrUrl!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                                    <ExternalLink className="h-3.5 w-3.5" /> Open form
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
