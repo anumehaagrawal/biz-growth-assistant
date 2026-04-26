@@ -61,7 +61,8 @@ function ContentPage() {
   };
 
   const generate = async () => {
-    if (!user || !topic.trim()) return;
+    if (!user || !topic.trim() || contentType === "post") return;
+    const ct = contentType;
     setGenerating(true);
     setLatest(null);
     try {
@@ -87,9 +88,9 @@ function ContentPage() {
             location: business.location,
             website: business.website,
           },
-          contentType,
+          contentType: ct,
           topic,
-          platform: contentType === "social" ? platform : undefined,
+          platform: ct === "social" ? platform : undefined,
           resources: (resources ?? [])
             .filter((r) => r.extracted_text && r.extracted_text.length > 0)
             .map((r) => ({ name: r.name, text: r.extracted_text })),
@@ -99,10 +100,10 @@ function ContentPage() {
       setLatest(output);
       await supabase.from("content_pieces").insert({
         user_id: user.id,
-        content_type: contentType,
+        content_type: ct,
         prompt: topic,
         output,
-        metadata: contentType === "social" ? { platform } : {},
+        metadata: ct === "social" ? { platform } : {},
       });
       refreshHistory();
       toast.success("Fresh content, ready to go!");
