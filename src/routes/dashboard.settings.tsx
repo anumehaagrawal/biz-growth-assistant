@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({ meta: [{ title: "Business settings — Bloom" }] }),
@@ -69,7 +70,11 @@ function SettingsPage() {
           </div>
           <div>
             <Label>Location</Label>
-            <Input value={form.location ?? ""} onChange={(e) => update("location", e.target.value)} className="mt-1.5" />
+            <LocationAutocomplete
+              value={form.location ?? ""}
+              onChange={(v) => update("location", v)}
+              className="mt-1.5"
+            />
           </div>
         </div>
 
