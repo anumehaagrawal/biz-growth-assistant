@@ -56,8 +56,9 @@ export const Route = createFileRoute("/dashboard/content")({
 function ContentPage() {
   const { user } = useAuth();
   const generateFn = useServerFn(generateContent);
+  const generateKitFn = useServerFn(generateOutreachKit);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [contentType, setContentType] = useState<"social" | "email" | "blog" | "post">("social");
+  const [contentType, setContentType] = useState<"generator" | "social" | "email" | "blog" | "post">("generator");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -68,6 +69,54 @@ function ContentPage() {
   const [resourceCount, setResourceCount] = useState(0);
   const [emails, setEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState("");
+
+  // Generator (outreach kit) state
+  const [activityForm, setActivityForm] = useState<ActivityForm>(defaultActivityForm);
+  const [kitGenerating, setKitGenerating] = useState(false);
+  const [latestKit, setLatestKit] = useState<OutreachKit | null>(null);
+
+  const updateActivity = (key: keyof ActivityForm, value: string) =>
+    setActivityForm((current) => ({ ...current, [key]: value }));
+
+  const generateKit = async () => {
+    if (!user || !activityForm.program.trim() || !activityForm.schedule.trim()) return;
+    setKitGenerating(true);
+    setLatestKit(null);
+    try {
+      const { data: business } = await supabase
+        .from("businesses").select("*").eq("user_id", user.id).single();
+      if (!business) throw new Error("Organization profile not found");
+
+      const { kit } = await generateKitFn({
+        data: {
+          business: {
+            name: business.name,
+            industry: business.industry?.trim() || "general",
+            description: business.description,
+            target_audience: business.target_audience,
+            brand_voice: business.brand_voice,
+            goals: business.goals,
+            location: business.location,
+            website: business.website,
+          },
+          activity: activityForm,
+        },
+      });
+      setLatestKit(kit);
+      await supabase.from("content_pieces").insert({
+        user_id: user.id,
+        content_type: "outreach_kit",
+        prompt: `${activityForm.program} for ${activityForm.audience} - ${activityForm.schedule}`,
+        output: JSON.stringify(kit),
+        metadata: activityForm,
+      });
+      toast.success("Outreach kit is ready");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Couldn't generate outreach kit");
+    } finally {
+      setKitGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
