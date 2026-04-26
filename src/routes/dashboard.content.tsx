@@ -276,7 +276,7 @@ function ContentPage() {
     <div className="mx-auto max-w-3xl">
       <div>
         <div className="flex items-start justify-between gap-4">
-          <h1 className="font-display text-4xl text-ink">Tell your story</h1>
+          <h1 className="font-display text-4xl text-ink">Staff outreach studio</h1>
           <Link
             to="/posts"
             target="_blank"
@@ -285,7 +285,7 @@ function ContentPage() {
             View public gallery →
           </Link>
         </div>
-        <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
+        <p className="mt-2 text-muted-foreground">Generate full outreach kits, or write a single piece of content for social, email, blog, or a new public post.</p>
         {resourceCount > 0 ? (
           <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="h-3 w-3" /> Writing with {resourceCount} resource{resourceCount === 1 ? "" : "s"} as context
@@ -298,12 +298,109 @@ function ContentPage() {
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>
-            <TabsList className="grid w-full grid-cols-4 rounded-full bg-secondary p-1">
+            <TabsList className="grid w-full grid-cols-5 rounded-full bg-secondary p-1">
+              <TabsTrigger value="generator" className="rounded-full"><Wand2 className="mr-1.5 h-4 w-4" />Generator</TabsTrigger>
               <TabsTrigger value="social" className="rounded-full"><Instagram className="mr-1.5 h-4 w-4" />Social</TabsTrigger>
               <TabsTrigger value="email" className="rounded-full"><Mail className="mr-1.5 h-4 w-4" />Email</TabsTrigger>
               <TabsTrigger value="blog" className="rounded-full"><FileText className="mr-1.5 h-4 w-4" />Blog</TabsTrigger>
               <TabsTrigger value="post" className="rounded-full"><ImageIcon className="mr-1.5 h-4 w-4" />Post</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="generator" className="mt-5">
+              <p className="text-sm text-muted-foreground">
+                Add a Club moment and get ready-to-share copy for social, flyer, school newsletter, parent SMS, QR card, and a short description — all at once.
+              </p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <Label htmlFor="program">What is happening?</Label>
+                  <Input
+                    id="program"
+                    value={activityForm.program}
+                    onChange={(e) => updateActivity("program", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Robotics build night"
+                    maxLength={160}
+                  />
+                </div>
+                <div>
+                  <Label>Who is it for?</Label>
+                  <Select value={activityForm.audience} onValueChange={(v) => updateActivity("audience", v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Elementary students">Elementary students</SelectItem>
+                      <SelectItem value="Middle school students">Middle school students</SelectItem>
+                      <SelectItem value="High school teens">High school teens</SelectItem>
+                      <SelectItem value="K-12 families">K-12 families</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="schedule">When is it?</Label>
+                  <Input
+                    id="schedule"
+                    value={activityForm.schedule}
+                    onChange={(e) => updateActivity("schedule", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Wednesday at 4:30pm"
+                    maxLength={200}
+                  />
+                </div>
+                <div>
+                  <Label>What should families do next?</Label>
+                  <Select value={activityForm.callToAction} onValueChange={(v) => updateActivity("callToAction", v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Visit the Club this week">Visit the Club this week</SelectItem>
+                      <SelectItem value="Stop by from 4-6pm">Stop by from 4-6pm</SelectItem>
+                      <SelectItem value="Ask us for signup help">Ask us for signup help</SelectItem>
+                      <SelectItem value="Bring your child for a first visit">Bring your child for a first visit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="photoNote">Photo or context note</Label>
+                  <Input
+                    id="photoNote"
+                    value={activityForm.photoNote}
+                    onChange={(e) => updateActivity("photoNote", e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Optional: kids building robots, staff demo table"
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={generateKit}
+                disabled={kitGenerating || !activityForm.program.trim() || !activityForm.schedule.trim()}
+                size="lg"
+                className="mt-5 w-full rounded-full shadow-warm"
+              >
+                {kitGenerating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building kit...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" />Generate outreach kit</>
+                )}
+              </Button>
+
+              {latestKit && (
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {kitSections.map(({ key, label, icon: Icon }) => (
+                    <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-primary" />
+                          <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => copy(latestKit[key])}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{latestKit[key]}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="post" className="mt-5">
               <PostComposer />
@@ -329,7 +426,7 @@ function ContentPage() {
             </TabsContent>
           </Tabs>
 
-          {contentType !== "post" && (
+          {contentType !== "post" && contentType !== "generator" && (
             <>
               <div className="mt-5">
                 <Label>Photo (required for grounded writing)</Label>
