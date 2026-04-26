@@ -12,9 +12,38 @@ import { Sparkles } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
-  head: () => ({ meta: [{ title: "Set up your business — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Set up your organization — Bloom" }] }),
   component: Onboarding,
 });
+
+const ORG_TYPES = [
+  "Registered charity / 501(c)(3)",
+  "Community group",
+  "Foundation",
+  "Faith-based organization",
+  "Social enterprise",
+  "Advocacy / activist group",
+  "School or educational non-profit",
+  "Other non-profit",
+];
+
+const CAUSE_AREAS = [
+  "Education",
+  "Health & wellbeing",
+  "Poverty & food security",
+  "Housing & homelessness",
+  "Environment & climate",
+  "Animal welfare",
+  "Arts & culture",
+  "Human rights & advocacy",
+  "Youth & families",
+  "Refugees & migration",
+  "Mental health",
+  "Disability & inclusion",
+  "Community development",
+  "Faith & spirituality",
+  "Other",
+];
 
 function Onboarding() {
   const { user } = useAuth();
@@ -22,13 +51,14 @@ function Onboarding() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    industry: "",
-    description: "",
-    target_audience: "",
+    industry: "", // cause area
+    description: "", // mission
+    target_audience: "", // supporters
     brand_voice: "warm",
     location: "",
     website: "",
-    goals: "",
+    goals: "", // mission goals
+    org_type: "Registered charity / 501(c)(3)",
   });
 
   const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -37,15 +67,27 @@ function Onboarding() {
     e.preventDefault();
     if (!user) return;
     setSubmitting(true);
-    const { error } = await supabase.from("businesses").insert({ ...form, user_id: user.id });
+    // Persist org_type inside description prefix-free; we store in industry composite would be lossy.
+    // Simpler: store org_type inline in description or leverage existing columns. We'll prepend to description.
+    const enrichedDescription = `[${form.org_type}] ${form.description}`;
+    const { error } = await supabase.from("businesses").insert({
+      user_id: user.id,
+      name: form.name,
+      industry: form.industry,
+      description: enrichedDescription,
+      target_audience: form.target_audience,
+      brand_voice: form.brand_voice,
+      location: form.location,
+      website: form.website,
+      goals: form.goals,
+    });
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("All set! Let's create something beautiful.");
+    toast.success("All set! Let's tell your story.");
     navigate({ to: "/dashboard/content" });
-    // hard reload to refresh hasBusiness check cleanly
     setTimeout(() => window.location.reload(), 100);
   };
 
@@ -55,23 +97,37 @@ function Onboarding() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-clay shadow-warm">
           <Sparkles className="h-7 w-7 text-primary-foreground" />
         </div>
-        <h1 className="mt-5 font-display text-4xl text-ink">Tell us about your business</h1>
+        <h1 className="mt-5 font-display text-4xl text-ink">Tell us about your organization</h1>
         <p className="mt-2 text-muted-foreground">
-          The more we know, the more on-brand your content will be.
+          The more we know about your mission, the more on-brand your content will be.
         </p>
       </div>
 
       <form onSubmit={submit} className="mt-8 space-y-5 rounded-3xl border border-border bg-card p-8 shadow-soft">
         <div className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
-            <Label htmlFor="name">Business name</Label>
-            <Input id="name" required value={form.name} onChange={(e) => update("name", e.target.value)} className="mt-1.5" placeholder="Maya's Coffee Roasters" />
+            <Label htmlFor="name">Organization name</Label>
+            <Input id="name" required value={form.name} onChange={(e) => update("name", e.target.value)} className="mt-1.5" placeholder="Riverside Community Food Bank" />
           </div>
           <div>
-            <Label htmlFor="industry">Industry</Label>
-            <Input id="industry" required value={form.industry} onChange={(e) => update("industry", e.target.value)} className="mt-1.5" placeholder="Specialty coffee" />
+            <Label htmlFor="org_type">Organization type</Label>
+            <Select value={form.org_type} onValueChange={(v) => update("org_type", v)}>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ORG_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
+            <Label htmlFor="industry">Cause area</Label>
+            <Select value={form.industry} onValueChange={(v) => update("industry", v)}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose your focus" /></SelectTrigger>
+              <SelectContent>
+                {CAUSE_AREAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="md:col-span-2">
             <Label htmlFor="location">Location (optional)</Label>
             <LocationAutocomplete
               id="location"
@@ -84,7 +140,7 @@ function Onboarding() {
         </div>
 
         <div>
-          <Label htmlFor="description">What do you do?</Label>
+          <Label htmlFor="description">Your mission — what do you do and why?</Label>
           <Textarea
             id="description"
             required
@@ -92,12 +148,12 @@ function Onboarding() {
             onChange={(e) => update("description", e.target.value)}
             className="mt-1.5"
             rows={3}
-            placeholder="We roast small-batch single-origin coffee and run a neighborhood café focused on slow mornings and good conversation."
+            placeholder="We provide free, dignified groceries to families facing food insecurity in Riverside County, while advocating for systemic change."
           />
         </div>
 
         <div>
-          <Label htmlFor="target_audience">Who are your customers?</Label>
+          <Label htmlFor="target_audience">Who do you want to reach?</Label>
           <Textarea
             id="target_audience"
             required
@@ -105,7 +161,7 @@ function Onboarding() {
             onChange={(e) => update("target_audience", e.target.value)}
             className="mt-1.5"
             rows={2}
-            placeholder="Local coffee enthusiasts in their 25-45s, remote workers, and weekend brunchers who care about quality and community."
+            placeholder="Local donors aged 30-65, volunteers, faith communities, and small-business sponsors who care about hunger in our county."
           />
         </div>
 
@@ -114,25 +170,25 @@ function Onboarding() {
           <Select value={form.brand_voice} onValueChange={(v) => update("brand_voice", v)}>
             <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="warm">Warm & personal</SelectItem>
-              <SelectItem value="professional">Professional & polished</SelectItem>
-              <SelectItem value="playful">Playful & witty</SelectItem>
-              <SelectItem value="bold">Bold & confident</SelectItem>
-              <SelectItem value="educational">Educational & helpful</SelectItem>
-              <SelectItem value="luxurious">Refined & luxurious</SelectItem>
+              <SelectItem value="warm">Warm & heartfelt</SelectItem>
+              <SelectItem value="hopeful">Hopeful & uplifting</SelectItem>
+              <SelectItem value="urgent">Urgent & action-oriented</SelectItem>
+              <SelectItem value="professional">Professional & credible</SelectItem>
+              <SelectItem value="grassroots">Grassroots & community-led</SelectItem>
+              <SelectItem value="educational">Educational & informative</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="goals">What are you trying to grow? (optional)</Label>
+          <Label htmlFor="goals">Mission goals this season (optional)</Label>
           <Textarea
             id="goals"
             value={form.goals}
             onChange={(e) => update("goals", e.target.value)}
             className="mt-1.5"
             rows={2}
-            placeholder="Build a regular Sunday brunch crowd and grow our online bean subscription."
+            placeholder="Recruit 20 new monthly donors, fill 50 volunteer slots for our spring drive, and raise $25k for the new pantry truck."
           />
         </div>
 
