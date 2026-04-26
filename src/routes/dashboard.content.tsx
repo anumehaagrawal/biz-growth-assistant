@@ -726,10 +726,15 @@ function ContentPage() {
 
               <div className="mt-5">
                 <Label htmlFor="topic">A quick brief</Label>
+                {(eventImageUrl || buildBriefFromActivity()) && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Prefilled from your Generator activity{eventImageUrl ? " (photo + details)" : ""}. Edit freely.
+                  </p>
+                )}
                 <Textarea
                   id="topic"
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
+                  onChange={(e) => { setTopic(e.target.value); setTopicTouched(true); }}
                   className="mt-1.5"
                   rows={3}
                   placeholder={
