@@ -17,6 +17,8 @@ type Resource = {
   char_count: number;
   error: string | null;
   created_at: string;
+  source_url: string | null;
+  metadata: { pagesCrawled?: number; urls?: string[]; hostname?: string } | null;
 };
 
 const ACCEPTED = ".pdf,.docx,.txt,.md";
