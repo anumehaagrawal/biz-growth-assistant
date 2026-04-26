@@ -208,6 +208,16 @@ function Onboarding() {
           {submitting ? "Setting up..." : "Continue to Bloom"}
         </Button>
       </form>
+
+      <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <h2 className="font-display text-2xl text-ink">Add resources (optional)</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop in your website, annual report, brochures, or mission docs. Bloom will write from your real materials — not generic templates. You can add more anytime in Settings.
+        </p>
+        <div className="mt-5">
+          <ResourceManager />
+        </div>
+      </section>
     </div>
   );
 }
