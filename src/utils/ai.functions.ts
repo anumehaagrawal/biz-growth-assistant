@@ -210,6 +210,31 @@ function countStrategiesUsingEvents(plan: OutreachPlan, eventNames: string[]): n
   }).length;
 }
 
+function forcePlanToUseVerifiedEvents(plan: OutreachPlan, events: VerifiedLocalEvent[]): OutreachPlan {
+  const nextPlan: OutreachPlan = {
+    ...plan,
+    strategies: plan.strategies.map((strategy) => ({ ...strategy, steps: [...strategy.steps] })),
+  };
+
+  events.slice(0, 2).forEach((event, index) => {
+    const strategy = nextPlan.strategies[index];
+    if (!strategy) return;
+
+    strategy.title = `Show up at ${event.name}`;
+    strategy.category = "event";
+    strategy.why = event.whyFit;
+    strategy.steps = [
+      `Attend or request a tabling/partner presence at ${event.name} (${event.date})${event.venue ? ` at ${event.venue}` : ""}.`,
+      "Bring a concise flyer, volunteer sign-up sheet, and a clear invitation into this week's priority program or campaign.",
+      `Use the event follow-up to email or text every contact you meet and reference ${event.name} directly so the outreach feels local and personal.`,
+      `Coordinate around the verified source listing: ${event.sourceUrl}`,
+    ];
+    strategy.time_estimate = strategy.time_estimate || "1-2 hours";
+  });
+
+  return nextPlan;
+}
+
 async function revisePlanToUseEvents(
   plan: OutreachPlan,
   business: z.infer<typeof businessSchema>,
