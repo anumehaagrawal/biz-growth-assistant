@@ -174,6 +174,8 @@ LOCALITY-FIRST THINKING: When the organization has a location, think hard about 
 
 EVENTS & PROGRAMS: When the user provides events or programs they want to publicize, every strategy should help drive awareness, sign-ups, or attendance for those specific events. When no events are provided, infer the org's regular programs from reference materials and build strategies around amplifying those.
 
+LIVE LOCAL EVENTS: When a list of real upcoming community events is provided below (sourced from live web search), at least 2 of your 5 strategies MUST reference specific events from that list by name — propose tabling, flyering, attending, partnering, or coordinating around them. Treat those events as verified facts; do NOT invent dates, venues, or details beyond what's listed.
+
 Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice. When reference materials are provided, ground every strategy in real programs, partners, audiences, or wins from those materials — never invent statistics, quotes, or program names.${buildResourceSection(resources)}`;
 
     const userPrompt = `Create this week's outreach plan for:
@@ -185,8 +187,9 @@ Who they want to reach this week: ${audience}${audience_override?.trim() ? " (us
 ${business.location ? `Location / area served: ${business.location} — lean heavily into this locality. Recommend specific local venue types (schools, parks, libraries, community centers, faith groups, small businesses) where the org can post flyers, table at events, present, or partner.` : ""}
 ${business.goals ? `Mission goals this season: ${business.goals}` : ""}
 ${events_to_promote?.trim() ? `\nEVENTS / PROGRAMS TO PUBLICIZE THIS WEEK (build strategies around driving attendance & awareness for these):\n${events_to_promote.trim()}` : "\nNo specific events provided — infer the org's regular programs from the reference materials above and build strategies around amplifying those programs."}
+${liveEvents ? `\n=== REAL UPCOMING LOCAL EVENTS (live web search, fetched just now) ===\n${liveEvents}\n=== END LIVE EVENTS ===\n\nAt least 2 strategies MUST be built around specific events from the list above — name the event explicitly in the strategy title or steps.` : ""}
 
-Generate 5 outreach strategies they can act on this week. At least 2 strategies must reference concrete local venue types in the org's locality (schools, parks & rec, libraries, community centers, faith communities, neighborhood groups, local media). Mix tactics across donor outreach, volunteer recruitment, community partnerships, storytelling/content, events, advocacy, and supporter referrals. Each strategy must be specific to THIS organization — reference their cause, audience, mission goals, location, and the events/programs above.`;
+Generate 5 outreach strategies they can act on this week. At least 2 strategies must reference concrete local venue types in the org's locality (schools, parks & rec, libraries, community centers, faith communities, neighborhood groups, local media)${liveEvents ? ", and at least 2 must explicitly reference the real upcoming events listed above by name" : ""}. Mix tactics across donor outreach, volunteer recruitment, community partnerships, storytelling/content, events, advocacy, and supporter referrals. Each strategy must be specific to THIS organization — reference their cause, audience, mission goals, location, and the events/programs above.`;
 
     const result = await callAI(
       [
