@@ -134,7 +134,7 @@ function OutreachPage() {
       setPlanDate(week_start);
       toast.success("This week.s recommendations are ready!");
     } catch (e: any) {
-      toast.error(e.message ?? "Couldn't generate plan");
+      toast.error(e.message ?? "Couldn't generate recommendations");
     } finally {
       setGenerating(false);
     }
@@ -153,7 +153,7 @@ function OutreachPage() {
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 px-5 py-3 text-sm font-medium text-ink hover:bg-muted/40 rounded-2xl transition-colors">
         <span className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
-          Customize this plan
+          Customize these recommendations
           {(audienceOverride.trim() || eventsToPromote.trim()) && (
             <span className="ml-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
               {[audienceOverride.trim() && "audience", eventsToPromote.trim() && "events"].filter(Boolean).join(" + ")}
@@ -165,7 +165,7 @@ function OutreachPage() {
       <CollapsibleContent className="space-y-4 px-5 pb-5 pt-1">
         <div className="space-y-1.5">
           <Label htmlFor="audience-override" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Target audience for this plan <span className="normal-case text-muted-foreground/70">(optional — overrides your profile)</span>
+            Target audience for these recommendations <span className="normal-case text-muted-foreground/70">(optional — overrides your profile)</span>
           </Label>
           <Input
             id="audience-override"
@@ -210,16 +210,16 @@ function OutreachPage() {
           </div>
           <h1 className="mt-5 font-display text-4xl text-ink">Your weekly recommendations</h1>
           <p className="mt-3 text-muted-foreground">
-            Five concrete moves to grow donors, volunteers, and partnerships — grounded in your locality and programs. A fresh plan every week.
+            Five concrete moves to grow donors, volunteers, and partnerships — grounded in your locality and programs. Fresh recommendations every week.
           </p>
         </div>
         <div className="mt-6">{customizePanel}</div>
         <div className="text-center">
           <Button onClick={generate} size="lg" disabled={generating} className="mt-6 rounded-full shadow-warm">
             {generating ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Crafting your plan...</>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Crafting your recommendations...</>
             ) : (
-              <><Sparkles className="mr-2 h-4 w-4" />Generate this week's plan</>
+              <><Sparkles className="mr-2 h-4 w-4" />Generate this week's recommendations</>
             )}
           </Button>
         </div>
@@ -236,7 +236,7 @@ function OutreachPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium uppercase tracking-wider text-primary">Week of {weekLabel}</p>
-          <h1 className="mt-1 font-display text-4xl text-ink">Your outreach plan</h1>
+          <h1 className="mt-1 font-display text-4xl text-ink">Your weekly recommendations</h1>
           <p className="mt-2 max-w-xl text-muted-foreground">{plan.intro}</p>
           {resourceCount > 0 && (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
