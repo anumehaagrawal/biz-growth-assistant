@@ -133,6 +133,21 @@ function SettingsPage() {
           {saving ? "Saving..." : "Save changes"}
         </Button>
       </form>
+
+      <section className="mt-8 rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <div className="mb-5 flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
+            <Sparkles className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display text-2xl text-ink">Resources & context</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add your website, annual report, mission docs, brochures — Bloom uses these as source material whenever it writes content or builds your outreach plan.
+            </p>
+          </div>
+        </div>
+        <ResourceManager />
+      </section>
     </div>
   );
 }
