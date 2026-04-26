@@ -102,6 +102,53 @@ Write content that sounds genuinely human and mission-driven — never generic A
     return { output };
   });
 
+// Calls Google Gemini API DIRECTLY (not via Lovable Gateway) so we can use
+// the `googleSearch` grounding tool to find real, current local events.
+async function searchLocalEvents(location: string, industry: string, mission: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) return "";
+
+  const prompt = `Search the web for community events, public meetings, festivals, markets, fairs, and gatherings happening in or near "${location}" in the next 7-14 days.
+
+Focus on events relevant to a non-profit working on: ${industry}. Mission context: ${mission}.
+
+Look for: neighborhood association meetings, farmers markets, school events, library programs, community center activities, faith community gatherings, parks & rec events, festivals, fairs, public hearings, mutual aid events, cultural celebrations.
+
+For each event found, return on its own line:
+- Event name
+- Date / time (if known)
+- Venue / address (if known)
+- Why it might be a fit for this non-profit (1 short sentence)
+- Source URL
+
+If nothing concrete is found, return "NO_EVENTS_FOUND" and nothing else. Do NOT invent events.`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }],
+        }),
+      }
+    );
+    if (!res.ok) {
+      console.error("Gemini grounding error:", res.status, await res.text());
+      return "";
+    }
+    const json = await res.json();
+    const text = json.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join("\n") ?? "";
+    if (!text || text.includes("NO_EVENTS_FOUND")) return "";
+    return text.trim();
+  } catch (err) {
+    console.error("Gemini grounding fetch failed:", err);
+    return "";
+  }
+}
+
 export const generateOutreachPlan = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
@@ -115,6 +162,11 @@ export const generateOutreachPlan = createServerFn({ method: "POST" })
     const { business, resources, audience_override, events_to_promote } = data;
 
     const audience = audience_override?.trim() || business.target_audience;
+
+    // Step 1: Use Gemini + googleSearch to find real local events happening now.
+    const liveEvents = business.location
+      ? await searchLocalEvents(business.location, business.industry, business.description)
+      : "";
 
     const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community.
 
