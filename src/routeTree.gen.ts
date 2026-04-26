@@ -9,15 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PostsRouteImport } from './routes/posts'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardOutreachRouteImport } from './routes/dashboard.outreach'
 import { Route as DashboardOnboardingRouteImport } from './routes/dashboard.onboarding'
 import { Route as DashboardContentRouteImport } from './routes/dashboard.content'
 
+const PostsRoute = PostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -37,6 +44,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
@@ -63,19 +75,23 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/p/$slug': typeof PSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/p/$slug': typeof PSlugRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -83,10 +99,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/posts': typeof PostsRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/onboarding': typeof DashboardOnboardingRoute
   '/dashboard/outreach': typeof DashboardOutreachRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/p/$slug': typeof PSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -95,29 +113,35 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/posts'
     | '/dashboard/content'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
+    | '/p/$slug'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/posts'
     | '/dashboard/content'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
+    | '/p/$slug'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/posts'
     | '/dashboard/content'
     | '/dashboard/onboarding'
     | '/dashboard/outreach'
     | '/dashboard/settings'
+    | '/p/$slug'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -125,10 +149,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  PostsRoute: typeof PostsRoute
+  PSlugRoute: typeof PSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/posts': {
+      id: '/posts'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof PostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -156,6 +189,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/settings': {
       id: '/dashboard/settings'
@@ -212,7 +252,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  PostsRoute: PostsRoute,
+  PSlugRoute: PSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

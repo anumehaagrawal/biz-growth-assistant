@@ -558,3 +558,57 @@ Generate 5 outreach strategies they can act on this week. At least 2 strategies 
 
     return { plan };
   });
+
+// ----- Post caption generation (multimodal for images) -----
+
+export const generatePostCaption = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      business: businessSchema,
+      mediaUrl: z.string().url().max(2000),
+      mediaType: z.enum(["image", "video"]),
+      brief: z.string().max(1000).optional().default(""),
+      platform: z.enum(["instagram", "facebook", "linkedin"]).default("instagram"),
+      resources: z.array(resourceSchema).max(20).optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { business, mediaUrl, mediaType, brief, platform, resources } = data;
+
+    const platformGuide: Record<string, string> = {
+      instagram: "Instagram post: warm, vivid, scroll-stopping. 1-3 short paragraphs, line breaks for rhythm, end with a clear CTA, then 5-10 relevant hashtags on a new line.",
+      facebook: "Facebook post: conversational, story-led, slightly longer. Plain text with a clear CTA. 1-3 light hashtags max.",
+      linkedin: "LinkedIn post: professional and impact-focused. Lead with a strong hook, share the story/impact, end with a clear CTA. 3-5 relevant hashtags.",
+    };
+
+    const systemPrompt = `You are a social media writer for "${business.name}", a non-profit working in ${business.industry}.
+
+Mission: ${business.description}
+Audience: ${business.target_audience}
+Brand voice: ${business.brand_voice}
+${business.location ? `Location: ${business.location}` : ""}
+${business.goals ? `Current goals: ${business.goals}` : ""}
+
+Write captions that sound genuinely human and mission-driven. Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask.${buildResourceSection(resources)}`;
+
+    const userInstruction = mediaType === "image"
+      ? `Look carefully at the attached image and write a ${platformGuide[platform]}\n\nUser brief / context: ${brief || "(none — base it entirely on what you see in the image and the organization's mission)"}\n\nGround the caption in what is visibly happening in the image. Return ONLY the finished caption, no preamble.`
+      : `Write a ${platformGuide[platform]}\n\nThe post is a video. User brief / context: ${brief || "(no brief provided)"}\n\nReturn ONLY the finished caption, no preamble.`;
+
+    // Build multimodal user message for images
+    const userContent: any = mediaType === "image"
+      ? [
+          { type: "text", text: userInstruction },
+          { type: "image_url", image_url: { url: mediaUrl } },
+        ]
+      : userInstruction;
+
+    const result = await callAI([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ]);
+
+    const caption = result.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!caption) throw new Error("AI returned an empty caption. Please try again.");
+    return { caption };
+  });
