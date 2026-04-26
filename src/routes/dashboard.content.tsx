@@ -139,6 +139,60 @@ function ContentPage() {
     toast.success("Copied to clipboard");
   };
 
+  const addEmail = () => {
+    const value = emailInput.trim().replace(/[,;]$/, "");
+    if (!value) return;
+    const result = emailSchema.safeParse(value);
+    if (!result.success) {
+      toast.error("Not a valid email");
+      return;
+    }
+    if (emails.includes(value)) {
+      setEmailInput("");
+      return;
+    }
+    if (emails.length >= 50) {
+      toast.error("Max 50 recipients");
+      return;
+    }
+    setEmails([...emails, value]);
+    setEmailInput("");
+  };
+
+  const onEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "," || e.key === ";" || e.key === "Tab") {
+      e.preventDefault();
+      addEmail();
+    } else if (e.key === "Backspace" && !emailInput && emails.length) {
+      setEmails(emails.slice(0, -1));
+    }
+  };
+
+  const parseSubjectAndBody = (text: string): { subject: string; body: string } => {
+    // Look for a "Subject: ..." line at the top of the AI output
+    const lines = text.split("\n");
+    const subjLine = lines.find((l) => /^subject\s*:/i.test(l.trim()));
+    if (subjLine) {
+      const subject = subjLine.replace(/^subject\s*:\s*/i, "").trim();
+      const rest = lines.filter((l) => l !== subjLine).join("\n").trim();
+      return { subject, body: rest };
+    }
+    return { subject: lines[0].slice(0, 100), body: text };
+  };
+
+  const sendEmail = () => {
+    if (!latest) return;
+    if (emails.length === 0) {
+      toast.error("Add at least one recipient");
+      return;
+    }
+    const { subject, body } = parseSubjectAndBody(latest);
+    const photoLine = imageUrl ? `\n\n📷 Today's photo: ${imageUrl}` : "";
+    const fullBody = `${body}${photoLine}\n`;
+    const mailto = `mailto:?bcc=${encodeURIComponent(emails.join(","))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fullBody)}`;
+    window.location.href = mailto;
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
       <div>
