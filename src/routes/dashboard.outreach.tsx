@@ -52,6 +52,10 @@ function OutreachPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [resourceCount, setResourceCount] = useState(0);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [audienceOverride, setAudienceOverride] = useState("");
+  const [eventsToPromote, setEventsToPromote] = useState("");
+  const [businessLocation, setBusinessLocation] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
