@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Sparkles, RefreshCw, Loader2, Clock, Users, Megaphone, Mail, Calendar as CalIcon, HeartHandshake, MessageSquare, Settings2, ChevronDown, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/outreach")({
-  head: () => ({ meta: [{ title: "Weekly outreach plan — Club Connect" }] }),
+  head: () => ({ meta: [{ title: "Weekly recommendations — Club Connect" }] }),
   component: OutreachPage,
 });
 
@@ -132,7 +132,7 @@ function OutreachPage() {
       );
       setPlan(newPlan);
       setPlanDate(week_start);
-      toast.success("This week's plan is ready!");
+      toast.success("This week.s recommendations are ready!");
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't generate plan");
     } finally {
@@ -208,7 +208,7 @@ function OutreachPage() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-clay shadow-warm">
             <CalIcon className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="mt-5 font-display text-4xl text-ink">Your weekly outreach plan</h1>
+          <h1 className="mt-5 font-display text-4xl text-ink">Your weekly recommendations</h1>
           <p className="mt-3 text-muted-foreground">
             Five concrete moves to grow donors, volunteers, and partnerships — grounded in your locality and programs. A fresh plan every week.
           </p>

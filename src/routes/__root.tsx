@@ -31,7 +31,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Club Connect — AI Marketing Partner for Nonprofits" },
-      { name: "description", content: "Your warm, AI-powered marketing partner. Generate content and get weekly outreach plans tailored to your business." },
+      { name: "description", content: "Your warm, AI-powered marketing partner. Generate content and get weekly recommendationss tailored to your business." },
       { property: "og:title", content: "Club Connect — AI Marketing Partner for Nonprofits" },
       { property: "og:description", content: "Your warm, AI-powered marketing partner." },
       { property: "og:type", content: "website" },
