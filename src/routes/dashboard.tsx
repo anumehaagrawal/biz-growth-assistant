@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageCircle, Calendar, Settings, LogOut, Loader2 } from "lucide-react";
+import { Sparkles, MessageCircle, Calendar, Settings, LogOut, Loader2, ClipboardList } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Club Connect" }] }),
   component: DashboardLayout,
 });
 
@@ -65,13 +66,14 @@ function DashboardLayout() {
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-2xl font-semibold text-ink">Bloom</span>
+            <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
           </Link>
 
           {hasBusiness && !isOnboarding && (
             <nav className="hidden items-center gap-1 rounded-full border border-border bg-background/60 p-1 md:flex">
               <NavTab to="/dashboard/content" icon={MessageCircle} label="Content" />
               <NavTab to="/dashboard/outreach" icon={Calendar} label="Weekly Plan" />
+              <NavTab to="/dashboard/follow-up" icon={ClipboardList} label="Follow-Up" />
               <NavTab to="/dashboard/settings" icon={Settings} label="Organization" />
             </nav>
           )}
@@ -85,6 +87,7 @@ function DashboardLayout() {
           <nav className="flex items-center justify-center gap-1 border-t border-border/40 px-4 pb-3 md:hidden">
             <NavTab to="/dashboard/content" icon={MessageCircle} label="Content" />
             <NavTab to="/dashboard/outreach" icon={Calendar} label="Plan" />
+            <NavTab to="/dashboard/follow-up" icon={ClipboardList} label="Follow" />
             <NavTab to="/dashboard/settings" icon={Settings} label="Org" />
           </nav>
         )}
@@ -97,7 +100,7 @@ function DashboardLayout() {
   );
 }
 
-function NavTab({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+function NavTab({ to, icon: Icon, label }: { to: string; icon: LucideIcon; label: string }) {
   const location = useLocation();
   const active = location.pathname === to;
   return (
