@@ -32,7 +32,6 @@ function ContentPage() {
 
   useEffect(() => {
     if (!user) return;
-    refreshHistory();
     supabase
       .from("org_resources")
       .select("id", { count: "exact", head: true })
@@ -40,17 +39,6 @@ function ContentPage() {
       .eq("status", "ready")
       .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
-
-  const refreshHistory = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("content_pieces")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    setHistory(data ?? []);
-  };
 
   const generate = async () => {
     if (!user || !topic.trim() || contentType === "post") return;
