@@ -120,6 +120,8 @@ function OutreachPage() {
           resources: (resources ?? [])
             .filter((r) => r.extracted_text && r.extracted_text.length > 0)
             .map((r) => ({ name: r.name, text: r.extracted_text })),
+          audience_override: audienceOverride.trim() || null,
+          events_to_promote: eventsToPromote.trim() || null,
         },
       });
 
