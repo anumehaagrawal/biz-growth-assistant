@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
   head: () => ({ meta: [{ title: "Set up your business — Bloom" }] }),
