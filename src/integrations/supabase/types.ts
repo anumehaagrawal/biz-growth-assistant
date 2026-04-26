@@ -14,7 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      businesses: {
+        Row: {
+          brand_voice: string
+          created_at: string
+          description: string
+          goals: string | null
+          id: string
+          industry: string
+          location: string | null
+          name: string
+          target_audience: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          brand_voice?: string
+          created_at?: string
+          description: string
+          goals?: string | null
+          id?: string
+          industry: string
+          location?: string | null
+          name: string
+          target_audience: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          brand_voice?: string
+          created_at?: string
+          description?: string
+          goals?: string | null
+          id?: string
+          industry?: string
+          location?: string | null
+          name?: string
+          target_audience?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      content_pieces: {
+        Row: {
+          content_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          output: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          output: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          output?: string
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      outreach_plans: {
+        Row: {
+          created_at: string
+          id: string
+          strategies: Json
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          strategies: Json
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          strategies?: Json
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
