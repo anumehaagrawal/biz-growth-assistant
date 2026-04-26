@@ -97,6 +97,7 @@ export type Database = {
           extracted_text: string
           id: string
           kind: string
+          metadata: Json
           name: string
           source_url: string | null
           status: string
@@ -109,6 +110,7 @@ export type Database = {
           extracted_text?: string
           id?: string
           kind: string
+          metadata?: Json
           name: string
           source_url?: string | null
           status?: string
@@ -121,6 +123,7 @@ export type Database = {
           extracted_text?: string
           id?: string
           kind?: string
+          metadata?: Json
           name?: string
           source_url?: string | null
           status?: string
