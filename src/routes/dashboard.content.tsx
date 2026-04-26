@@ -18,14 +18,6 @@ export const Route = createFileRoute("/dashboard/content")({
   component: ContentPage,
 });
 
-type ContentPiece = {
-  id: string;
-  content_type: string;
-  prompt: string;
-  output: string;
-  metadata: any;
-  created_at: string;
-};
 
 function ContentPage() {
   const { user } = useAuth();
