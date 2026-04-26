@@ -85,7 +85,6 @@ function ContentPage() {
         output,
         metadata: ct === "social" ? { platform } : {},
       });
-      refreshHistory();
       toast.success("Fresh content, ready to go!");
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't generate content");
@@ -97,11 +96,6 @@ function ContentPage() {
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
-  };
-
-  const remove = async (id: string) => {
-    await supabase.from("content_pieces").delete().eq("id", id);
-    refreshHistory();
   };
 
   return (
