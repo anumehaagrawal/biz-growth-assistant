@@ -91,8 +91,8 @@ function AuthPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "signup"
-              ? "A warm, AI-powered marketing partner is one step away."
-              : "Sign in to continue growing your business."}
+              ? "A warm, AI-powered marketing partner for your non-profit is one step away."
+              : "Sign in to keep growing your mission's impact."}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -118,7 +118,7 @@ function AuthPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1.5"
-                placeholder="you@business.com"
+                placeholder="you@yourorg.org"
               />
             </div>
             <div>

@@ -72,7 +72,7 @@ function DashboardLayout() {
             <nav className="hidden items-center gap-1 rounded-full border border-border bg-background/60 p-1 md:flex">
               <NavTab to="/dashboard/content" icon={MessageCircle} label="Content" />
               <NavTab to="/dashboard/outreach" icon={Calendar} label="Weekly Plan" />
-              <NavTab to="/dashboard/settings" icon={Settings} label="Business" />
+              <NavTab to="/dashboard/settings" icon={Settings} label="Organization" />
             </nav>
           )}
 
@@ -85,7 +85,7 @@ function DashboardLayout() {
           <nav className="flex items-center justify-center gap-1 border-t border-border/40 px-4 pb-3 md:hidden">
             <NavTab to="/dashboard/content" icon={MessageCircle} label="Content" />
             <NavTab to="/dashboard/outreach" icon={Calendar} label="Plan" />
-            <NavTab to="/dashboard/settings" icon={Settings} label="Business" />
+            <NavTab to="/dashboard/settings" icon={Settings} label="Org" />
           </nav>
         )}
       </header>

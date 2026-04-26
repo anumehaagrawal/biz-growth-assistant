@@ -12,9 +12,16 @@ import { Loader2 } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 export const Route = createFileRoute("/dashboard/settings")({
-  head: () => ({ meta: [{ title: "Business settings — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Organization settings — Bloom" }] }),
   component: SettingsPage,
 });
+
+const CAUSE_AREAS = [
+  "Education", "Health & wellbeing", "Poverty & food security", "Housing & homelessness",
+  "Environment & climate", "Animal welfare", "Arts & culture", "Human rights & advocacy",
+  "Youth & families", "Refugees & migration", "Mental health", "Disability & inclusion",
+  "Community development", "Faith & spirituality", "Other",
+];
 
 function SettingsPage() {
   const { user } = useAuth();
@@ -55,18 +62,23 @@ function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="font-display text-4xl text-ink">Your business</h1>
+      <h1 className="font-display text-4xl text-ink">Your organization</h1>
       <p className="mt-2 text-muted-foreground">Keep this fresh — Bloom uses it for everything it writes.</p>
 
       <form onSubmit={save} className="mt-6 space-y-5 rounded-3xl border border-border bg-card p-8 shadow-soft">
         <div className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
-            <Label>Business name</Label>
+            <Label>Organization name</Label>
             <Input value={form.name} onChange={(e) => update("name", e.target.value)} className="mt-1.5" />
           </div>
           <div>
-            <Label>Industry</Label>
-            <Input value={form.industry} onChange={(e) => update("industry", e.target.value)} className="mt-1.5" />
+            <Label>Cause area</Label>
+            <Select value={form.industry} onValueChange={(v) => update("industry", v)}>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CAUSE_AREAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Location</Label>
@@ -79,11 +91,11 @@ function SettingsPage() {
         </div>
 
         <div>
-          <Label>What you do</Label>
+          <Label>Your mission</Label>
           <Textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} className="mt-1.5" />
         </div>
         <div>
-          <Label>Your customers</Label>
+          <Label>Who you want to reach (donors, volunteers, beneficiaries...)</Label>
           <Textarea value={form.target_audience} onChange={(e) => update("target_audience", e.target.value)} rows={2} className="mt-1.5" />
         </div>
         <div>
@@ -91,17 +103,17 @@ function SettingsPage() {
           <Select value={form.brand_voice} onValueChange={(v) => update("brand_voice", v)}>
             <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="warm">Warm & personal</SelectItem>
-              <SelectItem value="professional">Professional & polished</SelectItem>
-              <SelectItem value="playful">Playful & witty</SelectItem>
-              <SelectItem value="bold">Bold & confident</SelectItem>
-              <SelectItem value="educational">Educational & helpful</SelectItem>
-              <SelectItem value="luxurious">Refined & luxurious</SelectItem>
+              <SelectItem value="warm">Warm & heartfelt</SelectItem>
+              <SelectItem value="hopeful">Hopeful & uplifting</SelectItem>
+              <SelectItem value="urgent">Urgent & action-oriented</SelectItem>
+              <SelectItem value="professional">Professional & credible</SelectItem>
+              <SelectItem value="grassroots">Grassroots & community-led</SelectItem>
+              <SelectItem value="educational">Educational & informative</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Growth goals</Label>
+          <Label>Mission goals this season</Label>
           <Textarea value={form.goals ?? ""} onChange={(e) => update("goals", e.target.value)} rows={2} className="mt-1.5" />
         </div>
 

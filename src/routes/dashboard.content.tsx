@@ -107,8 +107,8 @@ function ContentPage() {
   return (
     <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
       <div>
-        <h1 className="font-display text-4xl text-ink">Create something beautiful</h1>
-        <p className="mt-2 text-muted-foreground">Pick a format, give a quick brief, and Bloom writes it in your voice.</p>
+        <h1 className="font-display text-4xl text-ink">Tell your story</h1>
+        <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>
@@ -131,10 +131,10 @@ function ContentPage() {
               </Select>
             </TabsContent>
             <TabsContent value="email" className="mt-5 text-sm text-muted-foreground">
-              We'll write a subject line, body, and call-to-action.
+              Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
             </TabsContent>
             <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
-              ~500-700 word post with subheadings, optimized for your audience.
+              ~500-700 word impact story or update with subheadings and a clear ask.
             </TabsContent>
           </Tabs>
 
@@ -146,7 +146,7 @@ function ContentPage() {
               onChange={(e) => setTopic(e.target.value)}
               className="mt-1.5"
               rows={3}
-              placeholder="Announcing our new Ethiopian Yirgacheffe — bright, floral, available Saturday."
+              placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
               maxLength={1000}
             />
           </div>
