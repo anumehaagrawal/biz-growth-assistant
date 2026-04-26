@@ -8,7 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Club Connect" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Outreach.AI" }] }),
   component: DashboardLayout,
 });
 
@@ -66,7 +66,7 @@ function DashboardLayout() {
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
+            <span className="font-display text-2xl font-semibold text-ink">Outreach.AI</span>
           </Link>
 
           {hasBusiness && !isOnboarding && (

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Sparkles, RefreshCw, Loader2, Clock, Users, Megaphone, Mail, Calendar as CalIcon, HeartHandshake, MessageSquare, Settings2, ChevronDown, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/outreach")({
-  head: () => ({ meta: [{ title: "Weekly recommendations — Club Connect" }] }),
+  head: () => ({ meta: [{ title: "Weekly recommendations — Outreach.AI" }] }),
   component: OutreachPage,
 });
 
@@ -189,7 +189,7 @@ function OutreachPage() {
             rows={4}
             className="rounded-xl resize-none"
           />
-          <p className="text-xs text-muted-foreground">If left blank, Club Connect will infer programs from your saved resources.</p>
+          <p className="text-xs text-muted-foreground">If left blank, Outreach.AI will infer programs from your saved resources.</p>
         </div>
         {businessLocation && (
           <p className="flex items-start gap-1.5 rounded-xl bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">

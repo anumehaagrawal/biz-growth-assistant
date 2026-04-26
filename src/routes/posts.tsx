@@ -27,10 +27,10 @@ export const Route = createFileRoute("/posts")({
   loader: () => fetchPosts(),
   head: () => ({
     meta: [
-      { title: "Community posts — Club Connect" },
-      { name: "description", content: "Stories, updates, and moments from non-profits using Club Connect." },
-      { property: "og:title", content: "Community posts — Club Connect" },
-      { property: "og:description", content: "Stories, updates, and moments from non-profits using Club Connect." },
+      { title: "Community posts — Outreach.AI" },
+      { name: "description", content: "Stories, updates, and moments from non-profits using Outreach.AI." },
+      { property: "og:title", content: "Community posts — Outreach.AI" },
+      { property: "og:description", content: "Stories, updates, and moments from non-profits using Outreach.AI." },
     ],
   }),
   component: PostsGallery,

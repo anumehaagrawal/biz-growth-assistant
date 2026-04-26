@@ -50,7 +50,7 @@ const kitSections: Array<{ key: keyof OutreachKit; label: string; icon: LucideIc
 ];
 
 export const Route = createFileRoute("/dashboard/content")({
-  head: () => ({ meta: [{ title: "Staff outreach generator — Club Connect" }] }),
+  head: () => ({ meta: [{ title: "Staff outreach generator — Outreach.AI" }] }),
   component: ContentPage,
 });
 
