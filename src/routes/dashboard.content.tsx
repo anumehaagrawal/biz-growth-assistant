@@ -35,10 +35,17 @@ function ContentPage() {
   const [generating, setGenerating] = useState(false);
   const [history, setHistory] = useState<ContentPiece[]>([]);
   const [latest, setLatest] = useState<string | null>(null);
+  const [resourceCount, setResourceCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     refreshHistory();
+    supabase
+      .from("org_resources")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "ready")
+      .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
 
   const refreshHistory = async () => {
