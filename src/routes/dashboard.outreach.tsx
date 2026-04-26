@@ -194,7 +194,7 @@ function OutreachPage() {
         {businessLocation && (
           <p className="flex items-start gap-1.5 rounded-xl bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
             <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
-            <span>Plans will recommend outreach at local schools, parks, libraries, community centers, and faith groups in <strong className="text-ink">{businessLocation}</strong>.</span>
+            <span>We will recommend outreach at local schools, parks, libraries, community centers, and faith groups in <strong className="text-ink">{businessLocation}</strong>.</span>
           </p>
         )}
       </CollapsibleContent>
