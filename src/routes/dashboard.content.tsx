@@ -173,24 +173,33 @@ function ContentPage() {
                 </SelectContent>
               </Select>
             </TabsContent>
-            <TabsContent value="email" className="mt-5 space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
-              </p>
-              <div>
-                <Label>Image (optional)</Label>
-                {emailImageUrl ? (
-                  <div className="mt-1.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
-                    <img src={emailImageUrl} alt="Email attachment" className="h-16 w-16 rounded-lg object-cover" />
+            <TabsContent value="email" className="mt-5 text-sm text-muted-foreground">
+              A warm daily update for parents — what their child did today, learning moments, and sweet details so they feel happy and connected.
+            </TabsContent>
+            <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
+              ~500-700 word impact story or update with subheadings and a clear ask.
+            </TabsContent>
+          </Tabs>
+
+          {contentType !== "post" && (
+            <>
+              <div className="mt-5">
+                <Label>Photo (required for grounded writing)</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  We never generate AI photos. Upload a real photo from today and the AI will write only about what it sees.
+                </p>
+                {imageUrl ? (
+                  <div className="mt-2 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
+                    <img src={imageUrl} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
                     <div className="flex-1 text-xs text-muted-foreground">
-                      The AI will reference this image while writing.
+                      The AI will reference this photo while writing.
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setEmailImageUrl(null)}>
+                    <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="mt-1.5">
+                  <div className="mt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -202,7 +211,7 @@ function ContentPage() {
                       {uploadingImage ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
                       ) : (
-                        <><Upload className="mr-2 h-4 w-4" />Add an image</>
+                        <><Upload className="mr-2 h-4 w-4" />Upload a photo</>
                       )}
                     </Button>
                     <input
@@ -212,42 +221,42 @@ function ContentPage() {
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) handleEmailImage(f);
+                        if (f) handleImage(f);
                         e.target.value = "";
                       }}
                     />
-                    <p className="mt-1.5 text-xs text-muted-foreground">PNG or JPG, up to 20MB. Helps the AI write something specific to your photo.</p>
+                    <p className="mt-1.5 text-xs text-muted-foreground">PNG or JPG, up to 20MB.</p>
                   </div>
                 )}
               </div>
-            </TabsContent>
-            <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
-              ~500-700 word impact story or update with subheadings and a clear ask.
-            </TabsContent>
-          </Tabs>
 
-          {contentType !== "post" && (
-            <>
               <div className="mt-5">
-                <Label htmlFor="topic">What's it about?</Label>
+                <Label htmlFor="topic">A quick brief</Label>
                 <Textarea
                   id="topic"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   className="mt-1.5"
                   rows={3}
-                  placeholder="Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
+                  placeholder={
+                    contentType === "email"
+                      ? "Today the toddlers explored the sensory bin, painted with their fingers, and had story time about kindness."
+                      : "Spring food drive: we need 200 volunteers and $25k to keep our pantry stocked through May."
+                  }
                   maxLength={1000}
                 />
               </div>
 
-              <Button onClick={generate} disabled={generating || !topic.trim()} size="lg" className="mt-5 w-full rounded-full shadow-warm">
+              <Button onClick={generate} disabled={generating || !topic.trim() || !imageUrl} size="lg" className="mt-5 w-full rounded-full shadow-warm">
                 {generating ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Writing...</>
                 ) : (
                   <><Sparkles className="mr-2 h-4 w-4" />Generate</>
                 )}
               </Button>
+              {!imageUrl && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">Upload a photo to get started.</p>
+              )}
             </>
           )}
         </div>
