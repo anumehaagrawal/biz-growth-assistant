@@ -80,18 +80,24 @@ export function ResourceManager() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleFetchWebsite = async () => {
-    if (!websiteUrl.trim()) return;
-    if (resources.length >= MAX_FILES) {
+  const handleFetchWebsite = async (overrideUrl?: string) => {
+    const url = (overrideUrl ?? websiteUrl).trim();
+    if (!url) return;
+    if (!overrideUrl && resources.length >= MAX_FILES) {
       toast.error(`You can have at most ${MAX_FILES} resources.`);
       return;
     }
     setFetchingUrl(true);
     try {
-      const result = await fetchFn({ data: { url: websiteUrl.trim() } });
+      const result: any = await fetchFn({ data: { url } });
       if (result.status === "ready") {
-        toast.success(`Fetched "${result.name}"`);
-        setWebsiteUrl("");
+        const pages = result.pagesCrawled ?? 1;
+        toast.success(
+          pages > 1
+            ? `Crawled ${pages} pages from ${result.name.split(" — ")[0]}`
+            : `Fetched "${result.name}"`
+        );
+        if (!overrideUrl) setWebsiteUrl("");
       } else {
         toast.error(result.error || "Couldn't fetch that page");
       }
@@ -101,6 +107,11 @@ export function ResourceManager() {
     } finally {
       setFetchingUrl(false);
     }
+  };
+
+  const handleRecrawl = (resource: Resource) => {
+    if (!resource.source_url) return;
+    handleFetchWebsite(resource.source_url);
   };
 
   const handleDelete = async (id: string) => {
