@@ -36,6 +36,8 @@ function ContentPage() {
 
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
+  const [emails, setEmails] = useState<string[]>([]);
+  const [emailInput, setEmailInput] = useState("");
 
   useEffect(() => {
     if (!user) return;
