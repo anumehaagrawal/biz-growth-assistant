@@ -548,6 +548,11 @@ Generate 5 outreach strategies they can act on this week. At least 2 strategies 
           verifiedLocalEventsText,
           verifiedEventNames,
         );
+
+        if (countStrategiesUsingEvents(plan, verifiedEventNames) < 2) {
+          console.warn("[generateOutreachPlan] Revision still missed verified events; forcing fallback event strategies.");
+          plan = forcePlanToUseVerifiedEvents(plan, verifiedLocalEvents);
+        }
       }
     }
 
