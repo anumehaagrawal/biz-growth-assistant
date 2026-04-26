@@ -355,7 +355,7 @@ export const generateContent = createServerFn({ method: "POST" })
 
     const formatGuide = {
       social: `a ${platform || "Instagram"} post for a non-profit (caption + 5-10 relevant hashtags). Make it human and emotionally resonant — the goal is to inspire action (donate, volunteer, share, advocate). ${platform === "linkedin" ? "Lean professional and impact-focused." : "Keep it warm, vivid, and scroll-stopping."}`,
-      email: "a non-profit email — could be a donor appeal, volunteer call-out, supporter update, or newsletter. Include a compelling subject line, a heartfelt opening, the story or update (2-3 short paragraphs), and a clear, specific call-to-action (donate, sign up, share, RSVP).",
+      email: "a warm daily update email to parents about what their kids did today. Include a friendly subject line, a personal greeting, 2-3 short paragraphs describing the day's activities, learning moments, and a sweet detail or two so parents feel happy and connected. Close with a kind sign-off. No fundraising ask unless explicitly requested.",
       blog: "a non-profit blog post or impact story with a catchy title, a human hook, 3-4 short sections with subheadings (story → impact → how readers can help), and a closing CTA. Aim for ~500-700 words. Use markdown.",
     }[contentType];
 
@@ -371,7 +371,7 @@ ${business.goals ? `Current mission goals: ${business.goals}` : ""}
 Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.${buildResourceSection(resources)}`;
 
     const imageInstruction = imageUrl
-      ? "\n\nAn image is attached. Look carefully at it and ground the writing in what you can actually see — the people, setting, mood, and details. Weave it naturally into the story."
+      ? "\n\nAn image is attached. Look carefully at it and ground the writing ONLY in what you can actually see — the people, activity, setting, mood, and details. Do NOT invent activities, names, or events that are not visible. If something is unclear, keep the description gentle and general rather than guessing."
       : "";
 
     const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}${imageInstruction}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
