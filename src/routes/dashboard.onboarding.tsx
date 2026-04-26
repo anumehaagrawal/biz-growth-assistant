@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import { ResourceManager } from "@/components/ResourceManager";
 
 export const Route = createFileRoute("/dashboard/onboarding")({
   head: () => ({ meta: [{ title: "Set up your organization — Bloom" }] }),
