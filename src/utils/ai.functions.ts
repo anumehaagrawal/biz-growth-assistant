@@ -102,6 +102,53 @@ Write content that sounds genuinely human and mission-driven — never generic A
     return { output };
   });
 
+// Calls Google Gemini API DIRECTLY (not via Lovable Gateway) so we can use
+// the `googleSearch` grounding tool to find real, current local events.
+async function searchLocalEvents(location: string, industry: string, mission: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) return "";
+
+  const prompt = `Search the web for community events, public meetings, festivals, markets, fairs, and gatherings happening in or near "${location}" in the next 7-14 days.
+
+Focus on events relevant to a non-profit working on: ${industry}. Mission context: ${mission}.
+
+Look for: neighborhood association meetings, farmers markets, school events, library programs, community center activities, faith community gatherings, parks & rec events, festivals, fairs, public hearings, mutual aid events, cultural celebrations.
+
+For each event found, return on its own line:
+- Event name
+- Date / time (if known)
+- Venue / address (if known)
+- Why it might be a fit for this non-profit (1 short sentence)
+- Source URL
+
+If nothing concrete is found, return "NO_EVENTS_FOUND" and nothing else. Do NOT invent events.`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }],
+        }),
+      }
+    );
+    if (!res.ok) {
+      console.error("Gemini grounding error:", res.status, await res.text());
+      return "";
+    }
+    const json = await res.json();
+    const text = json.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join("\n") ?? "";
+    if (!text || text.includes("NO_EVENTS_FOUND")) return "";
+    return text.trim();
+  } catch (err) {
+    console.error("Gemini grounding fetch failed:", err);
+    return "";
+  }
+}
+
 export const generateOutreachPlan = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
@@ -116,11 +163,18 @@ export const generateOutreachPlan = createServerFn({ method: "POST" })
 
     const audience = audience_override?.trim() || business.target_audience;
 
+    // Step 1: Use Gemini + googleSearch to find real local events happening now.
+    const liveEvents = business.location
+      ? await searchLocalEvents(business.location, business.industry, business.description)
+      : "";
+
     const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community.
 
 LOCALITY-FIRST THINKING: When the organization has a location, think hard about the actual civic fabric of that place — the kinds of public schools, parks, community centers, libraries, recreation departments, faith communities, farmers' markets, neighborhood associations, small businesses, and local media (community papers, neighborhood Facebook groups, Nextdoor) that typically exist there. Recommend concrete outreach moves that tap into these venues' public calendars and bulletin boards: school PTA meetings, parks & rec event listings, library community boards, community center activity catalogs, church bulletins, farmers' market tabling, local cafes' flyer walls. Suggest realistic outlets by name when you can infer them from the location and reference materials; otherwise describe the venue type specifically (e.g. "the rec center on the south side" rather than just "a community center"). Never invent the names of specific schools, parks, or businesses you can't verify — describe the venue type instead.
 
 EVENTS & PROGRAMS: When the user provides events or programs they want to publicize, every strategy should help drive awareness, sign-ups, or attendance for those specific events. When no events are provided, infer the org's regular programs from reference materials and build strategies around amplifying those.
+
+LIVE LOCAL EVENTS: When a list of real upcoming community events is provided below (sourced from live web search), at least 2 of your 5 strategies MUST reference specific events from that list by name — propose tabling, flyering, attending, partnering, or coordinating around them. Treat those events as verified facts; do NOT invent dates, venues, or details beyond what's listed.
 
 Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice. When reference materials are provided, ground every strategy in real programs, partners, audiences, or wins from those materials — never invent statistics, quotes, or program names.${buildResourceSection(resources)}`;
 
@@ -133,8 +187,9 @@ Who they want to reach this week: ${audience}${audience_override?.trim() ? " (us
 ${business.location ? `Location / area served: ${business.location} — lean heavily into this locality. Recommend specific local venue types (schools, parks, libraries, community centers, faith groups, small businesses) where the org can post flyers, table at events, present, or partner.` : ""}
 ${business.goals ? `Mission goals this season: ${business.goals}` : ""}
 ${events_to_promote?.trim() ? `\nEVENTS / PROGRAMS TO PUBLICIZE THIS WEEK (build strategies around driving attendance & awareness for these):\n${events_to_promote.trim()}` : "\nNo specific events provided — infer the org's regular programs from the reference materials above and build strategies around amplifying those programs."}
+${liveEvents ? `\n=== REAL UPCOMING LOCAL EVENTS (live web search, fetched just now) ===\n${liveEvents}\n=== END LIVE EVENTS ===\n\nAt least 2 strategies MUST be built around specific events from the list above — name the event explicitly in the strategy title or steps.` : ""}
 
-Generate 5 outreach strategies they can act on this week. At least 2 strategies must reference concrete local venue types in the org's locality (schools, parks & rec, libraries, community centers, faith communities, neighborhood groups, local media). Mix tactics across donor outreach, volunteer recruitment, community partnerships, storytelling/content, events, advocacy, and supporter referrals. Each strategy must be specific to THIS organization — reference their cause, audience, mission goals, location, and the events/programs above.`;
+Generate 5 outreach strategies they can act on this week. At least 2 strategies must reference concrete local venue types in the org's locality (schools, parks & rec, libraries, community centers, faith communities, neighborhood groups, local media)${liveEvents ? ", and at least 2 must explicitly reference the real upcoming events listed above by name" : ""}. Mix tactics across donor outreach, volunteer recruitment, community partnerships, storytelling/content, events, advocacy, and supporter referrals. Each strategy must be specific to THIS organization — reference their cause, audience, mission goals, location, and the events/programs above.`;
 
     const result = await callAI(
       [
