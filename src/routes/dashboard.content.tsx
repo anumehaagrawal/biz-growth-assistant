@@ -478,6 +478,47 @@ function ContentPage() {
                     maxLength={500}
                   />
                 </div>
+                <div className="md:col-span-2">
+                  <Label>Event image (for the printable flyer)</Label>
+                  {eventImageUrl ? (
+                    <div className="mt-1.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
+                      <img src={eventImageUrl} alt="Event" className="h-20 w-20 rounded-lg object-cover" />
+                      <div className="flex-1 text-xs text-muted-foreground">This image will appear on the PDF flyer.</div>
+                      <Button variant="ghost" size="sm" onClick={() => setEventImageUrl(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                        disabled={uploadingEventImage}
+                        onClick={() => eventImageInputRef.current?.click()}
+                      >
+                        {uploadingEventImage ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
+                        ) : (
+                          <><Upload className="mr-2 h-4 w-4" />Upload event image</>
+                        )}
+                      </Button>
+                      <input
+                        ref={eventImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleEventImage(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <p className="mt-1.5 text-xs text-muted-foreground">Optional. PNG or JPG, up to 20MB.</p>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button
                 onClick={generateKit}
@@ -494,20 +535,93 @@ function ContentPage() {
 
               {latestKit && (
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {kitSections.map(({ key, label, icon: Icon }) => (
-                    <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-primary" />
-                          <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                  {kitSections.map(({ key, label, icon: Icon }) => {
+                    const text = latestKit[key];
+                    const isFlyer = key === "flyer_copy";
+                    const isSocial = key === "social_caption";
+                    const isQrCard = key === "qr_card_text";
+                    return (
+                      <article key={key} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-primary" />
+                            <h2 className="font-sans text-sm font-semibold text-ink">{label}</h2>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => copy(text)}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => copy(latestKit[key])}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{latestKit[key]}</p>
-                    </article>
-                  ))}
+
+                        {isFlyer && eventImageUrl && (
+                          <img src={eventImageUrl} alt="Event" className="mt-3 max-h-44 w-full rounded-lg object-cover" />
+                        )}
+
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{text}</p>
+
+                        {isFlyer && (
+                          <Button
+                            onClick={downloadFlyer}
+                            disabled={generatingPdf}
+                            size="sm"
+                            className="mt-4 w-full rounded-full"
+                          >
+                            {generatingPdf ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building PDF...</>
+                            ) : (
+                              <><Download className="mr-2 h-4 w-4" />Download printable flyer (PDF)</>
+                            )}
+                          </Button>
+                        )}
+
+                        {isSocial && (
+                          <div className="mt-4 grid grid-cols-2 gap-2">
+                            <Button onClick={() => postToInstagram(text)} size="sm" variant="outline" className="rounded-full">
+                              <Instagram className="mr-1.5 h-4 w-4" /> Post on Instagram
+                            </Button>
+                            <Button onClick={() => postToFacebook(text)} size="sm" variant="outline" className="rounded-full">
+                              <Facebook className="mr-1.5 h-4 w-4" /> Post on Facebook
+                            </Button>
+                            <p className="col-span-2 text-[11px] text-muted-foreground">
+                              Caption is copied to your clipboard, then we open the app — paste & post.
+                            </p>
+                          </div>
+                        )}
+
+                        {isQrCard && (
+                          <div className="mt-4 space-y-2">
+                            {!signupQrDataUrl ? (
+                              <Button onClick={generateSignupQr} size="sm" className="w-full rounded-full">
+                                <QrCode className="mr-2 h-4 w-4" /> Generate sign-up QR code
+                              </Button>
+                            ) : (
+                              <div className="rounded-xl border border-border bg-secondary/40 p-3">
+                                <div className="flex items-start gap-3">
+                                  <img src={signupQrDataUrl} alt="Sign-up QR" className="h-24 w-24 rounded-md bg-white p-1" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-ink">Quick sign-up link</p>
+                                    <a href={signupQrUrl!} target="_blank" rel="noopener noreferrer" className="mt-0.5 block truncate text-xs text-primary underline">
+                                      {signupQrUrl}
+                                    </a>
+                                    <p className="mt-1 text-[11px] text-muted-foreground">
+                                      Families scan → fill child + parent name → get a QR to show at the Club.
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                  <Button onClick={downloadSignupQr} size="sm" variant="outline" className="rounded-full">
+                                    <Download className="mr-1.5 h-4 w-4" /> Download QR
+                                  </Button>
+                                  <a href={signupQrUrl!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                                    <ExternalLink className="h-3.5 w-3.5" /> Open form
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
