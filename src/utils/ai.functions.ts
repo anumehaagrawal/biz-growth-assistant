@@ -453,6 +453,109 @@ If nothing concrete is found, return "NO_EVENTS_FOUND" and nothing else. Do NOT 
   }
 }
 
+const outreachActivitySchema = z.object({
+  program: z.string().min(1).max(160),
+  audience: z.string().min(1).max(160),
+  schedule: z.string().min(1).max(200),
+  callToAction: z.string().min(1).max(200),
+  photoNote: z.string().max(500).optional(),
+});
+
+export type OutreachKit = {
+  social_caption: string;
+  flyer_copy: string;
+  newsletter_blurb: string;
+  parent_message: string;
+  qr_card_text: string;
+  short_description: string;
+};
+
+export const generateOutreachKit = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ business: businessSchema, activity: outreachActivitySchema }))
+  .handler(async ({ data }) => {
+    const { business, activity } = data;
+
+    const systemPrompt = `You write practical family outreach for Rainier Valley Boys & Girls Club staff.
+
+Positioning: A safe second home after school, from elementary years through graduation.
+Core goal: help local families picture their child at the Club and make the first step feel easy.
+Primary CTA style: visit the Club this week before committing.
+Secondary CTA style: get help signing up.
+
+Organization context:
+Name: ${business.name}
+Location / area served: ${business.location || "Rainier Valley, Seattle"}
+Mission/context: ${business.description}
+Audience: ${business.target_audience}
+Voice: clear, warm, local, and low-pressure.
+
+Avoid donor appeals, fundraising language, and generic nonprofit marketing language. Write for parents, guardians, school staff, and trusted community partners.`;
+
+    const userPrompt = `Create a ready-to-share outreach kit for this Club moment.
+
+Program/activity: ${activity.program}
+Who it is for: ${activity.audience}
+When: ${activity.schedule}
+What families should do next: ${activity.callToAction}
+${activity.photoNote ? `Photo/context note: ${activity.photoNote}` : ""}
+
+Requirements:
+- Social caption: suitable for Instagram and Facebook, short and vivid.
+- Flyer copy: headline, short body, and CTA.
+- Newsletter blurb: for a school or community partner email.
+- Parent message: SMS or WhatsApp length, friendly and direct.
+- QR card text: for a small ambassador card, no pressure to enroll.
+- Short description: one concise event/program description.
+- Mention visit/signup help where useful.
+- Return only the function call.`;
+
+    const result = await callAI(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      {
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "submit_outreach_kit",
+              description: "Submit a structured outreach kit",
+              parameters: {
+                type: "object",
+                properties: {
+                  social_caption: { type: "string" },
+                  flyer_copy: { type: "string" },
+                  newsletter_blurb: { type: "string" },
+                  parent_message: { type: "string" },
+                  qr_card_text: { type: "string" },
+                  short_description: { type: "string" },
+                },
+                required: [
+                  "social_caption",
+                  "flyer_copy",
+                  "newsletter_blurb",
+                  "parent_message",
+                  "qr_card_text",
+                  "short_description",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "submit_outreach_kit" } },
+      },
+    );
+
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments)
+      throw new Error("AI did not return an outreach kit. Please try again.");
+
+    const kit = JSON.parse(toolCall.function.arguments) as OutreachKit;
+    return { kit };
+  });
+
 export const generateOutreachPlan = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
