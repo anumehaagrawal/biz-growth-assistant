@@ -81,6 +81,52 @@ Write content that sounds genuinely human and mission-driven — never generic A
     return { output };
   });
 
+export const generateMediaCaption = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      business: businessSchema,
+      mediaUrl: z.string().url(),
+      mediaType: z.enum(["image", "video"]),
+      platform: z.string().max(50).optional(),
+      context: z.string().max(500).optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { business, mediaUrl, mediaType, platform, context } = data;
+    const platformLabel = platform ?? "Instagram";
+
+    const systemPrompt = `You are a social media writer for "${business.name}", a non-profit in ${business.industry}.
+About the organization: ${business.description}
+Audience: ${business.target_audience}
+Brand voice: ${business.brand_voice}
+${business.location ? `Location: ${business.location}` : ""}
+${business.goals ? `Goals: ${business.goals}` : ""}
+
+Write a ${platformLabel} post that is human, warm, and inspires action (share, sign up, donate). Never generic AI-speak. Include 5-8 relevant hashtags at the end.`;
+
+    const contextNote = context ? `\n\nExtra context from the staff member: ${context}` : "";
+    const userPrompt = `Write a ${platformLabel} post for this moment captured at ${business.name}.${contextNote}
+
+Return ONLY the finished post caption with hashtags — no preamble, no "Here's your post".`;
+
+    const userContent =
+      mediaType === "image"
+        ? [
+            { type: "image_url", image_url: { url: mediaUrl } },
+            { type: "text", text: userPrompt },
+          ]
+        : userPrompt;
+
+    const result = await callAI([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent as any },
+    ]);
+
+    const caption = result.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!caption) throw new Error("AI returned an empty response. Please try again.");
+    return { caption };
+  });
+
 export const generateOutreachPlan = createServerFn({ method: "POST" })
   .inputValidator(z.object({ business: businessSchema }))
   .handler(async ({ data }) => {
