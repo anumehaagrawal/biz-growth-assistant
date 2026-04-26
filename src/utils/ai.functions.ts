@@ -67,10 +67,11 @@ export const generateContent = createServerFn({ method: "POST" })
       contentType: z.enum(["social", "email", "blog"]),
       topic: z.string().min(1).max(1000),
       platform: z.string().max(50).optional(),
+      resources: z.array(resourceSchema).max(20).optional(),
     })
   )
   .handler(async ({ data }) => {
-    const { business, contentType, topic, platform } = data;
+    const { business, contentType, topic, platform, resources } = data;
 
     const formatGuide = {
       social: `a ${platform || "Instagram"} post for a non-profit (caption + 5-10 relevant hashtags). Make it human and emotionally resonant — the goal is to inspire action (donate, volunteer, share, advocate). ${platform === "linkedin" ? "Lean professional and impact-focused." : "Keep it warm, vivid, and scroll-stopping."}`,
@@ -84,9 +85,10 @@ About the organization & mission: ${business.description}
 Who they're trying to reach (donors, volunteers, supporters, beneficiaries): ${business.target_audience}
 Brand voice: ${business.brand_voice}
 ${business.location ? `Location / area served: ${business.location}` : ""}
+${business.website ? `Website: ${business.website}` : ""}
 ${business.goals ? `Current mission goals: ${business.goals}` : ""}
 
-Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.`;
+Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.${buildResourceSection(resources)}`;
 
     const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
 
