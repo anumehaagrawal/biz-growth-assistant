@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateContent } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
 
 export const Route = createFileRoute("/dashboard/content")({
@@ -22,11 +22,14 @@ export const Route = createFileRoute("/dashboard/content")({
 function ContentPage() {
   const { user } = useAuth();
   const generateFn = useServerFn(generateContent);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [contentType, setContentType] = useState<"social" | "email" | "blog" | "post">("social");
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  
+  const [emailImageUrl, setEmailImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
 
@@ -39,6 +42,34 @@ function ContentPage() {
       .eq("status", "ready")
       .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
+
+  const handleEmailImage = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image is too large (max 20MB)");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("post-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("post-media").getPublicUrl(path);
+      setEmailImageUrl(pub.publicUrl);
+      toast.success("Image attached");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const generate = async () => {
     if (!user || !topic.trim() || contentType === "post") return;
@@ -71,6 +102,7 @@ function ContentPage() {
           contentType: ct,
           topic,
           platform: ct === "social" ? platform : undefined,
+          imageUrl: ct === "email" && emailImageUrl ? emailImageUrl : undefined,
           resources: (resources ?? [])
             .filter((r) => r.extracted_text && r.extracted_text.length > 0)
             .map((r) => ({ name: r.name, text: r.extracted_text })),
@@ -83,7 +115,7 @@ function ContentPage() {
         content_type: ct,
         prompt: topic,
         output,
-        metadata: ct === "social" ? { platform } : {},
+        metadata: ct === "social" ? { platform } : ct === "email" && emailImageUrl ? { imageUrl: emailImageUrl } : {},
       });
       toast.success("Fresh content, ready to go!");
     } catch (e: any) {
@@ -138,8 +170,53 @@ function ContentPage() {
                 </SelectContent>
               </Select>
             </TabsContent>
-            <TabsContent value="email" className="mt-5 text-sm text-muted-foreground">
-              Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
+            <TabsContent value="email" className="mt-5 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Donor appeal, volunteer call-out, or supporter newsletter — subject line, body, and CTA included.
+              </p>
+              <div>
+                <Label>Image (optional)</Label>
+                {emailImageUrl ? (
+                  <div className="mt-1.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-2">
+                    <img src={emailImageUrl} alt="Email attachment" className="h-16 w-16 rounded-lg object-cover" />
+                    <div className="flex-1 text-xs text-muted-foreground">
+                      The AI will reference this image while writing.
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setEmailImageUrl(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      disabled={uploadingImage}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {uploadingImage ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
+                      ) : (
+                        <><Upload className="mr-2 h-4 w-4" />Add an image</>
+                      )}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleEmailImage(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <p className="mt-1.5 text-xs text-muted-foreground">PNG or JPG, up to 20MB. Helps the AI write something specific to your photo.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="blog" className="mt-5 text-sm text-muted-foreground">
               ~500-700 word impact story or update with subheadings and a clear ask.
