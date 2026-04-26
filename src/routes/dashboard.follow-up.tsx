@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/follow-up")({
-  head: () => ({ meta: [{ title: "Warm follow-up tracker — Club Connect" }] }),
+  head: () => ({ meta: [{ title: "Warm follow-up tracker — Outreach.AI" }] }),
   component: FollowUpPage,
 });
 

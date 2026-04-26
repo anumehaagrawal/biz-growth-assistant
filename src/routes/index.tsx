@@ -11,9 +11,9 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Club Connect — AI marketing partner for nonprofits" },
-      { name: "description", content: "Club Connect is the AI marketing partner for nonprofits. Turn one event into social posts, printable flyers, parent texts, school blurbs, and a sign-up QR — in under a minute." },
-      { property: "og:title", content: "Club Connect — AI marketing partner for nonprofits" },
+      { title: "Outreach.AI — AI marketing partner for nonprofits" },
+      { name: "description", content: "Outreach.AI is the AI marketing partner for nonprofits. Turn one event into social posts, printable flyers, parent texts, school blurbs, and a sign-up QR — in under a minute." },
+      { property: "og:title", content: "Outreach.AI — AI marketing partner for nonprofits" },
       { property: "og:description", content: "One event in. Social posts, flyers, parent messages, and a sign-up QR out. Built for nonprofit teams of one." },
     ],
   }),
@@ -36,7 +36,7 @@ function Landing() {
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-clay shadow-warm">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-2xl font-semibold text-ink">Club Connect</span>
+          <span className="font-display text-2xl font-semibold text-ink">Outreach.AI</span>
         </Link>
         <div className="flex items-center gap-3">
           <Link to="/posts" className="hidden text-sm text-muted-foreground hover:text-ink sm:inline">
@@ -62,7 +62,7 @@ function Landing() {
             One event in. <span className="italic text-primary">A whole outreach kit out.</span>
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground text-balance">
-            Club Connect is built for nonprofit teams of one. Tell us what's happening this week — we'll write the social post, printable flyer, school newsletter blurb, parent text, and a sign-up QR code your families can scan at the door.
+            Outreach.AI is built for nonprofit teams of one. Tell us what's happening this week — we'll write the social post, printable flyer, school newsletter blurb, parent text, and a sign-up QR code your families can scan at the door.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="rounded-full shadow-warm">
@@ -97,7 +97,7 @@ function Landing() {
       {/* What you get — the "kit" */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">What Club Connect makes for you</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">What Outreach.AI makes for you</p>
           <h2 className="mt-2 font-display text-4xl text-ink">Everything one event needs — generated together</h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
             Type one program once. Get six on-brand pieces of outreach, ready to send.
@@ -163,7 +163,7 @@ function Landing() {
               You shouldn't need a marketing team to fill the room.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Most nonprofits don't have a comms director. They have one person doing program, fundraising, social, family follow-up, and the printer that's out of toner. Club Connect is the AI marketing partner that does the writing, designing, and tracking — so that one person can stay focused on families.
+              Most nonprofits don't have a comms director. They have one person doing program, fundraising, social, family follow-up, and the printer that's out of toner. Outreach.AI is the AI marketing partner that does the writing, designing, and tracking — so that one person can stay focused on families.
             </p>
             <ul className="mt-5 space-y-2.5 text-sm text-ink">
               {[
@@ -186,7 +186,7 @@ function Landing() {
             <div className="mt-4 space-y-4">
               {[
                 { time: "2:14pm", body: "Staff types: \"Robotics build night, middle schoolers, Wed at 4:30pm.\"" },
-                { time: "2:14pm", body: "Club Connect writes the Instagram caption, flyer copy, parent text, and QR card." },
+                { time: "2:14pm", body: "Outreach.AI writes the Instagram caption, flyer copy, parent text, and QR card." },
                 { time: "2:15pm", body: "Staff downloads the PDF flyer with the kids-building-robots photo." },
                 { time: "2:16pm", body: "Caption posted to IG. Flyer printed. Parent text sent to last week's visitors." },
                 { time: "Wed 5:02pm", body: "Three families scan the QR at the door. All show up in the dashboard." },
@@ -205,7 +205,7 @@ function Landing() {
       <section className="mx-auto max-w-4xl px-6 pb-24">
         <div className="rounded-[2rem] bg-gradient-clay p-10 text-center shadow-warm md:p-14">
           <h2 className="font-display text-4xl text-primary-foreground text-balance">
-            Spend the morning with families. Let Club Connect handle the marketing.
+            Spend the morning with families. Let Outreach.AI handle the marketing.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-primary-foreground/90">
             Free to start. No credit card. Set up your nonprofit in under five minutes.
@@ -225,7 +225,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground">
-        Club Connect — the AI marketing partner for nonprofits.
+        Outreach.AI — the AI marketing partner for nonprofits.
       </footer>
     </div>
   );

@@ -122,7 +122,7 @@ function PostPage() {
         </article>
 
         <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Sparkles className="h-3 w-3" /> Made with Club Connect
+          <Sparkles className="h-3 w-3" /> Made with Outreach.AI
         </div>
       </div>
     </div>
