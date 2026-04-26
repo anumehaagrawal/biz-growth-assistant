@@ -47,7 +47,7 @@ export function ResourceManager() {
     if (!user) return;
     const { data } = await supabase
       .from("org_resources")
-      .select("id,kind,name,status,char_count,error,created_at")
+      .select("id,kind,name,status,char_count,error,created_at,source_url,metadata")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setResources((data ?? []) as Resource[]);
