@@ -76,9 +76,117 @@ function ContentPage() {
   const [activityForm, setActivityForm] = useState<ActivityForm>(defaultActivityForm);
   const [kitGenerating, setKitGenerating] = useState(false);
   const [latestKit, setLatestKit] = useState<OutreachKit | null>(null);
+  const [eventImageUrl, setEventImageUrl] = useState<string | null>(null);
+  const [uploadingEventImage, setUploadingEventImage] = useState(false);
+  const eventImageInputRef = useRef<HTMLInputElement>(null);
+  const [signupQrUrl, setSignupQrUrl] = useState<string | null>(null);
+  const [signupQrDataUrl, setSignupQrDataUrl] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const updateActivity = (key: keyof ActivityForm, value: string) =>
     setActivityForm((current) => ({ ...current, [key]: value }));
+
+  const handleEventImage = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image is too large (max 20MB)");
+      return;
+    }
+    setUploadingEventImage(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${user.id}/event-${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("post-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("post-media").getPublicUrl(path);
+      setEventImageUrl(pub.publicUrl);
+      toast.success("Event image attached");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploadingEventImage(false);
+    }
+  };
+
+  const generateSignupQr = async () => {
+    if (!user) return;
+    // Use the staff user_id as the kit_code so signups attribute back to this staff member
+    const url = `${window.location.origin}/signup/${user.id}`;
+    try {
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 512,
+        margin: 2,
+        color: { dark: "#004B87", light: "#FFFFFF" },
+      });
+      setSignupQrUrl(url);
+      setSignupQrDataUrl(dataUrl);
+      toast.success("Signup QR ready");
+    } catch (e: any) {
+      toast.error("Couldn't make QR code");
+    }
+  };
+
+  const downloadSignupQr = () => {
+    if (!signupQrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = signupQrDataUrl;
+    a.download = `club-signup-qr.png`;
+    a.click();
+  };
+
+  const downloadFlyer = async () => {
+    if (!latestKit) return;
+    setGeneratingPdf(true);
+    try {
+      const { data: business } = await supabase
+        .from("businesses").select("name").eq("user_id", user!.id).single();
+      // Auto-generate QR if missing
+      let qrData = signupQrDataUrl;
+      let qrUrl = signupQrUrl;
+      if (!qrData && user) {
+        qrUrl = `${window.location.origin}/signup/${user.id}`;
+        qrData = await QRCode.toDataURL(qrUrl, {
+          width: 512,
+          margin: 2,
+          color: { dark: "#004B87", light: "#FFFFFF" },
+        });
+        setSignupQrUrl(qrUrl);
+        setSignupQrDataUrl(qrData);
+      }
+      await downloadFlyerPdf({
+        orgName: business?.name ?? "Boys & Girls Club",
+        program: activityForm.program,
+        schedule: activityForm.schedule,
+        flyerCopy: latestKit.flyer_copy,
+        imageUrl: eventImageUrl,
+        qrDataUrl: qrData,
+        qrCaption: qrUrl ?? undefined,
+      });
+      toast.success("Flyer downloaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Couldn't generate PDF");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const postToInstagram = (caption: string) => {
+    navigator.clipboard.writeText(caption);
+    toast.success("Caption copied — paste it in Instagram");
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  };
+
+  const postToFacebook = (caption: string) => {
+    navigator.clipboard.writeText(caption);
+    toast.success("Caption copied — paste it in Facebook");
+    window.open("https://www.facebook.com/", "_blank", "noopener,noreferrer");
+  };
 
   const generateKit = async () => {
     if (!user || !activityForm.program.trim() || !activityForm.schedule.trim()) return;
