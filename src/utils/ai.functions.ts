@@ -54,20 +54,20 @@ export const generateContent = createServerFn({ method: "POST" })
     const { business, contentType, topic, platform } = data;
 
     const formatGuide = {
-      social: `a ${platform || "Instagram"} post (caption + 5-10 relevant hashtags). Keep it scroll-stopping, ${platform === "linkedin" ? "professional yet warm" : "punchy and authentic"}.`,
-      email: "a marketing email with a compelling subject line, warm greeting, body (2-3 short paragraphs), and a clear call-to-action.",
-      blog: "a blog post with a catchy title, intro hook, 3-4 short sections with subheadings, and a closing CTA. Aim for ~500-700 words. Use markdown.",
+      social: `a ${platform || "Instagram"} post for a non-profit (caption + 5-10 relevant hashtags). Make it human and emotionally resonant — the goal is to inspire action (donate, volunteer, share, advocate). ${platform === "linkedin" ? "Lean professional and impact-focused." : "Keep it warm, vivid, and scroll-stopping."}`,
+      email: "a non-profit email — could be a donor appeal, volunteer call-out, supporter update, or newsletter. Include a compelling subject line, a heartfelt opening, the story or update (2-3 short paragraphs), and a clear, specific call-to-action (donate, sign up, share, RSVP).",
+      blog: "a non-profit blog post or impact story with a catchy title, a human hook, 3-4 short sections with subheadings (story → impact → how readers can help), and a closing CTA. Aim for ~500-700 words. Use markdown.",
     }[contentType];
 
-    const systemPrompt = `You are a marketing writer for "${business.name}", a ${business.industry} business.
+    const systemPrompt = `You are a marketing and storytelling writer for "${business.name}", a non-profit organization working in ${business.industry}.
 
-About the business: ${business.description}
-Target audience: ${business.target_audience}
+About the organization & mission: ${business.description}
+Who they're trying to reach (donors, volunteers, supporters, beneficiaries): ${business.target_audience}
 Brand voice: ${business.brand_voice}
-${business.location ? `Location: ${business.location}` : ""}
-${business.goals ? `Goals: ${business.goals}` : ""}
+${business.location ? `Location / area served: ${business.location}` : ""}
+${business.goals ? `Current mission goals: ${business.goals}` : ""}
 
-Write content that sounds genuinely human, never generic AI-speak. Match the brand voice precisely.`;
+Write content that sounds genuinely human and mission-driven — never generic AI-speak, never "salesy". Center real people and impact. Match the brand voice precisely. Always include a clear, specific ask (donate, volunteer, share, sign up, advocate) when appropriate.`;
 
     const userPrompt = `Write ${formatGuide}\n\nTopic / context: ${topic}\n\nReturn ONLY the finished content, no preamble, no "Here's your post" — just the content itself, ready to publish.`;
 
@@ -86,17 +86,18 @@ export const generateOutreachPlan = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { business } = data;
 
-    const systemPrompt = `You are a small-business outreach strategist. You design weekly outreach plans that are concrete, achievable for a busy small-business owner, and tailored to their specific situation. No generic advice.`;
+    const systemPrompt = `You are a non-profit outreach and fundraising strategist. You design weekly outreach plans that are concrete, achievable for a busy small non-profit team (often volunteer-run), and tailored to the organization's specific mission, audience, and community. Mix donor cultivation, volunteer recruitment, community partnerships, storytelling, advocacy, and grassroots tactics. No generic advice.`;
 
     const userPrompt = `Create this week's outreach plan for:
 
-Business: ${business.name} (${business.industry})
-About: ${business.description}
-Audience: ${business.target_audience}
-${business.location ? `Location: ${business.location}` : ""}
-${business.goals ? `Goals: ${business.goals}` : ""}
+Organization: ${business.name}
+Cause area: ${business.industry}
+Mission: ${business.description}
+Who they want to reach: ${business.target_audience}
+${business.location ? `Location / area served: ${business.location}` : ""}
+${business.goals ? `Mission goals this season: ${business.goals}` : ""}
 
-Generate 5 outreach strategies they can act on this week. Mix tactics: partnerships, community, content, direct outreach, events, referrals, etc. Each strategy must be specific to THIS business — reference their industry, audience, or location.`;
+Generate 5 outreach strategies they can act on this week. Mix tactics across donor outreach, volunteer recruitment, community partnerships (local businesses, faith groups, schools), storytelling/content, events, advocacy, and supporter referrals. Each strategy must be specific to THIS organization — reference their cause, audience, mission goals, or location.`;
 
     const result = await callAI(
       [
