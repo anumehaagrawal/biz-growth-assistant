@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadResource, fetchWebsiteResource, deleteResource } from "@/utils/resources.functions";
 import { toast } from "sonner";
-import { Upload, Globe, FileText, Trash2, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { Upload, Globe, FileText, Trash2, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon, RefreshCw } from "lucide-react";
 
 type Resource = {
   id: string;
