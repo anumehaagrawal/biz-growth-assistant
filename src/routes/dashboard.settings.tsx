@@ -90,6 +90,16 @@ function SettingsPage() {
               className="mt-1.5"
             />
           </div>
+          <div className="md:col-span-2">
+            <Label>Website</Label>
+            <Input
+              type="url"
+              value={form.website ?? ""}
+              onChange={(e) => update("website", e.target.value)}
+              placeholder="https://yourorg.org"
+              className="mt-1.5"
+            />
+          </div>
         </div>
 
         <div>
