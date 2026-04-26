@@ -132,12 +132,12 @@ export function ResourceManager() {
           <Globe className="h-3.5 w-3.5" /> Fetch your website
         </Label>
         <p className="mt-1 text-xs text-muted-foreground">
-          Pull text from your homepage or a page like /about. Bloom will use it as context.
+          Paste your homepage — Bloom will read every page on your site and use them all as context.
         </p>
         <div className="mt-2 flex gap-2">
           <Input
             type="url"
-            placeholder="https://yourorg.org/about"
+            placeholder="https://yourorg.org"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             disabled={fetchingUrl}
@@ -150,7 +150,7 @@ export function ResourceManager() {
           />
           <Button
             type="button"
-            onClick={handleFetchWebsite}
+            onClick={() => handleFetchWebsite()}
             disabled={fetchingUrl || !websiteUrl.trim()}
             className="rounded-full"
           >
@@ -158,11 +158,16 @@ export function ResourceManager() {
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <LinkIcon className="mr-1.5 h-4 w-4" /> Fetch
+                <LinkIcon className="mr-1.5 h-4 w-4" /> Crawl site
               </>
             )}
           </Button>
         </div>
+        {fetchingUrl && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Crawling your site… this can take 20–40 seconds.
+          </p>
+        )}
       </div>
 
       {/* File upload dropzone */}
