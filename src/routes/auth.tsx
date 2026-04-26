@@ -34,7 +34,7 @@ function AuthPage() {
     setSubmitting(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -43,14 +43,33 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Welcome to Bloom! Let's set up your business.");
+        if (data.session) {
+          toast.success("Welcome to Bloom! Let's set up your business.");
+        } else {
+          // No session = email confirmation required. Try signing in immediately.
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) {
+            toast.success("Account created! Please check your email to confirm, then sign in.");
+            setMode("signin");
+          } else {
+            toast.success("Welcome to Bloom!");
+          }
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+      const msg = err?.message ?? "Something went wrong";
+      if (msg.toLowerCase().includes("invalid login")) {
+        toast.error("Email or password is incorrect. New here? Create an account first.");
+      } else if (msg.toLowerCase().includes("already registered")) {
+        toast.error("This email is already registered. Try signing in instead.");
+        setMode("signin");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
