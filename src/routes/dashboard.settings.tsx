@@ -70,7 +70,11 @@ function SettingsPage() {
           </div>
           <div>
             <Label>Location</Label>
-            <Input value={form.location ?? ""} onChange={(e) => update("location", e.target.value)} className="mt-1.5" />
+            <LocationAutocomplete
+              value={form.location ?? ""}
+              onChange={(v) => update("location", v)}
+              className="mt-1.5"
+            />
           </div>
         </div>
 
