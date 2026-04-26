@@ -106,7 +106,10 @@ Write content that sounds genuinely human and mission-driven — never generic A
 // the `googleSearch` grounding tool to find real, current local events.
 async function searchLocalEvents(location: string, industry: string, mission: string): Promise<string> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
-  if (!apiKey) return "";
+  if (!apiKey) {
+    console.warn("[searchLocalEvents] GOOGLE_AI_API_KEY missing — skipping live event search");
+    return "";
+  }
 
   const prompt = `Search the web for community events, public meetings, festivals, markets, fairs, and gatherings happening in or near "${location}" in the next 7-14 days.
 
@@ -123,6 +126,7 @@ For each event found, return on its own line:
 
 If nothing concrete is found, return "NO_EVENTS_FOUND" and nothing else. Do NOT invent events.`;
 
+  console.log(`[searchLocalEvents] Searching Gemini for events near "${location}"...`);
   try {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -136,15 +140,24 @@ If nothing concrete is found, return "NO_EVENTS_FOUND" and nothing else. Do NOT 
       }
     );
     if (!res.ok) {
-      console.error("Gemini grounding error:", res.status, await res.text());
+      const body = await res.text();
+      console.error(`[searchLocalEvents] Gemini error ${res.status}:`, body.slice(0, 500));
       return "";
     }
     const json = await res.json();
     const text = json.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join("\n") ?? "";
-    if (!text || text.includes("NO_EVENTS_FOUND")) return "";
+    if (!text) {
+      console.warn("[searchLocalEvents] Gemini returned no text. finishReason:", json.candidates?.[0]?.finishReason);
+      return "";
+    }
+    if (text.includes("NO_EVENTS_FOUND")) {
+      console.log("[searchLocalEvents] Gemini found no concrete events.");
+      return "";
+    }
+    console.log(`[searchLocalEvents] ✓ Got ${text.length} chars of event data`);
     return text.trim();
   } catch (err) {
-    console.error("Gemini grounding fetch failed:", err);
+    console.error("[searchLocalEvents] fetch failed:", err);
     return "";
   }
 }
