@@ -1,87 +1,71 @@
 ## Goal
 
-Let an org enrich its profile with **a website link** and **uploaded resource files** (PDFs, docs, text). Bloom extracts text from each, stores it as searchable context, and feeds it into every Content and Outreach generation so the AI writes from the org's actual materials (annual reports, mission docs, brochures, etc.).
+When the user enters their website URL, Bloom automatically discovers all pages on the same domain, extracts text from each, and stores everything as a single combined resource for use as AI context.
 
-## What the user will see
+## What changes for the user
 
-**Onboarding & Settings → Organization page:**
-- A "Website link" field (already present in onboarding, will also be added to Settings).
-- A new **"Resources"** section with:
-  - A **drag-and-drop / "Upload files"** button (PDF, DOCX, TXT, MD — up to 10MB each, max 10 files).
-  - A list of uploaded files showing name, size, status (Processing / Ready / Failed), and a delete button.
-  - A **"Fetch website"** button next to the URL field — pulls the page text once and stores it as a resource called "Website: yoursite.org".
+- The "Fetch your website" field stays the same — just paste your homepage URL.
+- After clicking Fetch, we crawl the whole site (up to ~25 pages) and show progress: "Crawling… 8 / 25 pages".
+- The result appears as one resource: e.g. `yourorg.org — 18 pages crawled · 47,213 chars`.
+- Re-fetching the same domain replaces the previous crawl (no duplicates).
+- A small "Re-crawl" button on the resource lets users refresh anytime.
 
-**Content & Outreach tabs:**
-- Small banner: *"Using 4 resources as context · manage in Settings"* so users know their materials are being used.
-- AI output noticeably reflects the org's own language, programs, and stats from uploaded docs.
+## How the crawl works (technical)
 
-## How it works
+Crawler logic in `src/utils/resources.functions.ts`, replacing the current `fetchWebsiteResource`:
 
-```text
-Settings page
-   │
-   ├── Upload file ──► server fn: uploadResource
-   │                     • saves file to Storage bucket
-   │                     • extracts text (PDF/DOCX/TXT)
-   │                     • stores text in org_resources table
-   │
-   ├── Fetch website ─► server fn: fetchWebsiteResource
-   │                     • fetches URL, strips HTML to text
-   │                     • stores as org_resources row
-   │
-   └── Delete ────────► removes Storage file + DB row
+1. **Seed discovery** — given `https://example.org`:
+   - Try `/sitemap.xml` and `/sitemap_index.xml` first; parse out `<loc>` URLs (handles nested sitemap indexes).
+   - Fallback: fetch the homepage and extract same-origin `<a href>` links.
+2. **BFS crawl** with strict limits:
+   - Same registrable domain only (no external links).
+   - Max **25 pages**, max depth **2** from seed.
+   - Skip non-HTML extensions (`.pdf`, `.jpg`, `.zip`, etc.) and obvious noise paths (`/wp-admin`, `/cart`, `/login`, `?` query-only URLs, anchors).
+   - Concurrency of **5** parallel fetches with `Promise.all` batches.
+   - 8-second timeout per page via `AbortController`.
+   - Polite `User-Agent: BloomBot/1.0`.
+3. **Per-page extraction** — reuse existing `stripHtml` + `extractTitle`. Store a small structured chunk per page:
+   ```
+   ## About Us  (https://example.org/about)
+   <cleaned text>
+   ```
+4. **Combine + clamp** — concatenate all pages, then apply existing `clamp()` (30k char cap). If we hit the cap, prioritize homepage + `/about` + `/mission` + `/programs` first.
+5. **Store** in `org_resources` as a single row:
+   - `kind: "website"`
+   - `name: "example.org — 18 pages crawled"`
+   - `source_url: <homepage URL>`
+   - `extracted_text: <combined>`
+   - Add new field `metadata jsonb` to store `{ pagesCrawled, pagesAttempted, urls: [...] }` so we can show details later.
+6. **De-duplication** — before insert, delete any existing `kind='website'` row for the same hostname + same user.
 
-Content / Outreach generation
-   │
-   └── pulls business profile + all org_resources rows
-       ──► sends combined context to Lovable AI
-```
+## Database change
 
-## Database & storage changes
+Add a `metadata jsonb` column to `org_resources` (nullable, default `{}`) via migration. Stores crawl details without bloating the main schema.
 
-**New table `org_resources`** (with RLS — user can only see their own):
-- `id`, `user_id`, `business_id`
-- `kind` (`'file'` or `'website'`)
-- `name` (filename or page title)
-- `source_url` (storage path or website URL)
-- `extracted_text` (the parsed content used as AI context)
-- `char_count`, `status` (`'processing' | 'ready' | 'failed'`), `error`
-- `created_at`
+## UI changes
 
-**New Storage bucket `org-resources`** (private), with RLS so users only access files under their own `user_id/` prefix.
+`src/components/ResourceManager.tsx`:
+- Rename helper text under the URL field: "Paste your homepage — Bloom will read every page on your site."
+- During fetch, replace the spinner-only state with a live counter sourced from a new lightweight progress mechanism: since the server function is one round-trip, we'll show a determinate-looking progress message ("Crawling your site… this can take 20–40s") plus the spinner. (Real streaming progress would require SSE — out of scope for this iteration.)
+- After success: show toast `Crawled 18 pages from yourorg.org`.
+- On the resource row, show `kind: website` items with a subtitle like `18 pages · 47k chars` and a small **Re-crawl** icon button that re-runs the same URL.
 
-**Settings table update**: add `website` to the editable fields (already in DB schema, just not in the Settings UI today).
+## Failure handling
 
-## Server functions (in `src/utils/ai.functions.ts` + new `src/utils/resources.functions.ts`)
+- If sitemap and homepage both fail → mark `failed` with `"Couldn't reach that site"`.
+- If homepage works but no sub-pages found → store homepage only with note `Only 1 page found`.
+- Per-page failures are silently skipped; only count successes.
+- Hard cap total crawl time at **45 seconds** — return what we have so far if exceeded.
 
-1. **`uploadResource`** — accepts file (FormData), uploads to Storage, extracts text:
-   - PDF → `pdfjs-dist` (legacy build, works in Worker runtime).
-   - DOCX → `mammoth`.
-   - TXT/MD → read as string.
-   - Truncates to ~30k chars per file to stay under AI context limits.
-2. **`fetchWebsiteResource`** — fetches URL server-side, strips HTML tags, takes first ~30k chars.
-3. **`deleteResource`** — removes Storage object + DB row.
-4. **`generateContent` & `generateOutreachPlan`** — extended to accept a `resources: { name, text }[]` array. The system prompt gains a new section:
-   > *"REFERENCE MATERIALS from the organization (use facts, language, and tone from these — do not invent statistics):"*
-   > followed by each resource truncated to a fair share of a ~60k-char total budget.
+## Files touched
 
-## Frontend changes
+- `src/utils/resources.functions.ts` — rewrite `fetchWebsiteResource`, add internal helpers `discoverSeedUrls`, `crawlSite`, `parseSitemap`.
+- `src/components/ResourceManager.tsx` — copy update, page-count display, re-crawl button.
+- New migration: `add_metadata_to_org_resources`.
 
-- **New component** `src/components/ResourceManager.tsx` — handles file dropzone, upload progress, list, delete, and "Fetch website" button. Reused in Onboarding (optional, skippable) and Settings (primary location).
-- **`dashboard.settings.tsx`** — add Website field + `<ResourceManager />` section.
-- **`dashboard.onboarding.tsx`** — after the existing form, add an optional "Add resources now (or later in Settings)" step with `<ResourceManager />`.
-- **`dashboard.content.tsx`** & **`dashboard.outreach.tsx`** — fetch `org_resources` (status='ready') alongside the business profile and pass them to the server function. Show the "Using N resources" indicator.
+## Out of scope (noted for later)
 
-## Notes & tradeoffs
-
-- **PDF parsing in the Worker runtime**: `pdfjs-dist` legacy build is Worker-compatible. If a particular PDF fails (scanned/image-only), we mark it `failed` with a clear message — we will not run OCR.
-- **Context size**: total resource text injected per AI call capped at ~60k chars; oldest/largest resources get trimmed first. Keeps responses fast and within model limits.
-- **Privacy**: bucket is private; only the owning user can read their files via signed URLs (not exposed to anyone else).
-- **No extra cost setup**: uses existing Lovable Cloud storage + Lovable AI — no new API keys.
-
-## Out of scope (can do later if you want)
-
-- OCR for scanned PDFs.
-- Per-resource toggle ("use this for content but not outreach").
-- Re-fetching the website on a schedule.
-- Embeddings / RAG retrieval (current approach injects all resource text directly — simpler and works well up to ~10 documents).
+- Live streaming progress (would need SSE / Server-Sent Events).
+- JavaScript-rendered sites (would need Firecrawl/headless browser).
+- Per-page resource storage (user chose combined).
+- Scheduled re-crawls.

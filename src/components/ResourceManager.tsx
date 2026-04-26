@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadResource, fetchWebsiteResource, deleteResource } from "@/utils/resources.functions";
 import { toast } from "sonner";
-import { Upload, Globe, FileText, Trash2, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { Upload, Globe, FileText, Trash2, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon, RefreshCw } from "lucide-react";
 
 type Resource = {
   id: string;
@@ -17,6 +17,8 @@ type Resource = {
   char_count: number;
   error: string | null;
   created_at: string;
+  source_url: string | null;
+  metadata: { pagesCrawled?: number; urls?: string[]; hostname?: string } | null;
 };
 
 const ACCEPTED = ".pdf,.docx,.txt,.md";
@@ -45,7 +47,7 @@ export function ResourceManager() {
     if (!user) return;
     const { data } = await supabase
       .from("org_resources")
-      .select("id,kind,name,status,char_count,error,created_at")
+      .select("id,kind,name,status,char_count,error,created_at,source_url,metadata")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setResources((data ?? []) as Resource[]);
@@ -78,18 +80,24 @@ export function ResourceManager() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleFetchWebsite = async () => {
-    if (!websiteUrl.trim()) return;
-    if (resources.length >= MAX_FILES) {
+  const handleFetchWebsite = async (overrideUrl?: string) => {
+    const url = (overrideUrl ?? websiteUrl).trim();
+    if (!url) return;
+    if (!overrideUrl && resources.length >= MAX_FILES) {
       toast.error(`You can have at most ${MAX_FILES} resources.`);
       return;
     }
     setFetchingUrl(true);
     try {
-      const result = await fetchFn({ data: { url: websiteUrl.trim() } });
+      const result: any = await fetchFn({ data: { url } });
       if (result.status === "ready") {
-        toast.success(`Fetched "${result.name}"`);
-        setWebsiteUrl("");
+        const pages = result.pagesCrawled ?? 1;
+        toast.success(
+          pages > 1
+            ? `Crawled ${pages} pages from ${result.name.split(" — ")[0]}`
+            : `Fetched "${result.name}"`
+        );
+        if (!overrideUrl) setWebsiteUrl("");
       } else {
         toast.error(result.error || "Couldn't fetch that page");
       }
@@ -99,6 +107,11 @@ export function ResourceManager() {
     } finally {
       setFetchingUrl(false);
     }
+  };
+
+  const handleRecrawl = (resource: Resource) => {
+    if (!resource.source_url) return;
+    handleFetchWebsite(resource.source_url);
   };
 
   const handleDelete = async (id: string) => {
@@ -119,12 +132,12 @@ export function ResourceManager() {
           <Globe className="h-3.5 w-3.5" /> Fetch your website
         </Label>
         <p className="mt-1 text-xs text-muted-foreground">
-          Pull text from your homepage or a page like /about. Bloom will use it as context.
+          Paste your homepage — Bloom will read every page on your site and use them all as context.
         </p>
         <div className="mt-2 flex gap-2">
           <Input
             type="url"
-            placeholder="https://yourorg.org/about"
+            placeholder="https://yourorg.org"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             disabled={fetchingUrl}
@@ -137,7 +150,7 @@ export function ResourceManager() {
           />
           <Button
             type="button"
-            onClick={handleFetchWebsite}
+            onClick={() => handleFetchWebsite()}
             disabled={fetchingUrl || !websiteUrl.trim()}
             className="rounded-full"
           >
@@ -145,11 +158,16 @@ export function ResourceManager() {
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <LinkIcon className="mr-1.5 h-4 w-4" /> Fetch
+                <LinkIcon className="mr-1.5 h-4 w-4" /> Crawl site
               </>
             )}
           </Button>
         </div>
+        {fetchingUrl && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Crawling your site… this can take 20–40 seconds.
+          </p>
+        )}
       </div>
 
       {/* File upload dropzone */}
@@ -241,7 +259,10 @@ export function ResourceManager() {
                     )}
                     {r.status === "ready" && (
                       <span className="flex items-center gap-1 text-emerald-600">
-                        <CheckCircle2 className="h-3 w-3" /> Ready · {r.char_count.toLocaleString()} chars
+                        <CheckCircle2 className="h-3 w-3" />
+                        {r.kind === "website" && r.metadata?.pagesCrawled
+                          ? `${r.metadata.pagesCrawled} ${r.metadata.pagesCrawled === 1 ? "page" : "pages"} · ${(r.char_count / 1000).toFixed(1)}k chars`
+                          : `Ready · ${r.char_count.toLocaleString()} chars`}
                       </span>
                     )}
                     {r.status === "failed" && (
@@ -251,6 +272,18 @@ export function ResourceManager() {
                     )}
                   </div>
                 </div>
+                {r.kind === "website" && r.source_url && r.status !== "processing" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRecrawl(r)}
+                    disabled={fetchingUrl}
+                    aria-label={`Re-crawl ${r.name}`}
+                    title="Re-crawl this site"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${fetchingUrl ? "animate-spin" : ""}`} />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
