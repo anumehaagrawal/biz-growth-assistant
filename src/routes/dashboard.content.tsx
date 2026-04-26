@@ -127,6 +127,15 @@ function ContentPage() {
       <div>
         <h1 className="font-display text-4xl text-ink">Tell your story</h1>
         <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
+        {resourceCount > 0 ? (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Sparkles className="h-3 w-3" /> Writing with {resourceCount} resource{resourceCount === 1 ? "" : "s"} as context
+          </p>
+        ) : (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+            Tip: add your website or docs in <a href="/dashboard/settings" className="ml-1 underline">Settings</a> for richer, on-brand writing
+          </p>
+        )}
 
         <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-soft">
           <Tabs value={contentType} onValueChange={(v) => setContentType(v as any)}>
