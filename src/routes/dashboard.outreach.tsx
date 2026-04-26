@@ -250,6 +250,8 @@ function OutreachPage() {
         </Button>
       </div>
 
+      <div className="mt-6">{customizePanel}</div>
+
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         {plan.strategies.map((s, i) => {
           const Icon = categoryIcons[s.category] ?? Megaphone;
