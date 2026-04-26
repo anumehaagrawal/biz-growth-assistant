@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,10 +16,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 import {
   Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon, Upload, X, Send,
-  Wand2, Clipboard, MessageSquare, Newspaper, QrCode,
+  Wand2, Clipboard, MessageSquare, Newspaper, QrCode, Download, Facebook, ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
+import { downloadFlyerPdf } from "@/utils/flyerPdf";
 
 const emailSchema = z.string().trim().email();
 
