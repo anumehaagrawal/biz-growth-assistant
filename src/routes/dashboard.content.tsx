@@ -213,32 +213,6 @@ function ContentPage() {
         )}
       </div>
 
-      <aside>
-        <h2 className="font-display text-2xl text-ink">Recent</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your last 20 pieces.</p>
-        <div className="mt-4 space-y-3">
-          {history.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-              Nothing yet — your first creation will appear here.
-            </div>
-          )}
-          {history.map((h) => (
-            <div key={h.id} className="group rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-soft">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                  {h.content_type === "social" ? `${h.metadata?.platform ?? "social"}` : h.content_type}
-                </span>
-                <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Button variant="ghost" size="sm" onClick={() => copy(h.output)}><Copy className="h-3.5 w-3.5" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => remove(h.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              </div>
-              <p className="mt-2 text-xs font-medium text-muted-foreground">{h.prompt}</p>
-              <p className="mt-1.5 line-clamp-3 text-sm text-ink">{h.output}</p>
-            </div>
-          ))}
-        </div>
-      </aside>
     </div>
   );
 }
