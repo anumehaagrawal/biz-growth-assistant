@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateContent } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Copy, Trash2, Loader2, Instagram, Mail, FileText, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Copy, Loader2, Instagram, Mail, FileText, Image as ImageIcon } from "lucide-react";
 import { PostComposer } from "@/components/PostComposer";
 
 export const Route = createFileRoute("/dashboard/content")({
@@ -18,14 +18,6 @@ export const Route = createFileRoute("/dashboard/content")({
   component: ContentPage,
 });
 
-type ContentPiece = {
-  id: string;
-  content_type: string;
-  prompt: string;
-  output: string;
-  metadata: any;
-  created_at: string;
-};
 
 function ContentPage() {
   const { user } = useAuth();
@@ -34,13 +26,12 @@ function ContentPage() {
   const [platform, setPlatform] = useState("instagram");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [history, setHistory] = useState<ContentPiece[]>([]);
+  
   const [latest, setLatest] = useState<string | null>(null);
   const [resourceCount, setResourceCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    refreshHistory();
     supabase
       .from("org_resources")
       .select("id", { count: "exact", head: true })
@@ -48,17 +39,6 @@ function ContentPage() {
       .eq("status", "ready")
       .then(({ count }) => setResourceCount(count ?? 0));
   }, [user]);
-
-  const refreshHistory = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("content_pieces")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    setHistory(data ?? []);
-  };
 
   const generate = async () => {
     if (!user || !topic.trim() || contentType === "post") return;
@@ -105,7 +85,6 @@ function ContentPage() {
         output,
         metadata: ct === "social" ? { platform } : {},
       });
-      refreshHistory();
       toast.success("Fresh content, ready to go!");
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't generate content");
@@ -119,13 +98,8 @@ function ContentPage() {
     toast.success("Copied to clipboard");
   };
 
-  const remove = async (id: string) => {
-    await supabase.from("content_pieces").delete().eq("id", id);
-    refreshHistory();
-  };
-
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+    <div className="mx-auto max-w-3xl">
       <div>
         <h1 className="font-display text-4xl text-ink">Tell your story</h1>
         <p className="mt-2 text-muted-foreground">Pick a format, share a quick brief, and Bloom writes it in your organization's voice.</p>
@@ -213,32 +187,6 @@ function ContentPage() {
         )}
       </div>
 
-      <aside>
-        <h2 className="font-display text-2xl text-ink">Recent</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your last 20 pieces.</p>
-        <div className="mt-4 space-y-3">
-          {history.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-              Nothing yet — your first creation will appear here.
-            </div>
-          )}
-          {history.map((h) => (
-            <div key={h.id} className="group rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-soft">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                  {h.content_type === "social" ? `${h.metadata?.platform ?? "social"}` : h.content_type}
-                </span>
-                <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Button variant="ghost" size="sm" onClick={() => copy(h.output)}><Copy className="h-3.5 w-3.5" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => remove(h.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              </div>
-              <p className="mt-2 text-xs font-medium text-muted-foreground">{h.prompt}</p>
-              <p className="mt-1.5 line-clamp-3 text-sm text-ink">{h.output}</p>
-            </div>
-          ))}
-        </div>
-      </aside>
     </div>
   );
 }
