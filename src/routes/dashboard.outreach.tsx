@@ -1,15 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateOutreachPlan } from "@/utils/ai.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, RefreshCw, Loader2, Clock, Users, Megaphone, Mail, Calendar as CalIcon, HeartHandshake, MessageSquare } from "lucide-react";
+import {
+  Sparkles,
+  RefreshCw,
+  Loader2,
+  Clock,
+  Users,
+  Megaphone,
+  Mail,
+  Calendar as CalIcon,
+  HeartHandshake,
+  MessageSquare,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/dashboard/outreach")({
-  head: () => ({ meta: [{ title: "Weekly outreach plan — Bloom" }] }),
+  head: () => ({ meta: [{ title: "Weekly outreach plan — Club Connect" }] }),
   component: OutreachPage,
 });
 
@@ -23,7 +36,7 @@ type Strategy = {
 
 type Plan = { intro: string; strategies: Strategy[] };
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<string, LucideIcon> = {
   partnership: HeartHandshake,
   community: Users,
   content: Megaphone,
@@ -48,12 +61,7 @@ function OutreachPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    loadCurrentPlan();
-  }, [user]);
-
-  const loadCurrentPlan = async () => {
+  const loadCurrentPlan = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const week_start = getWeekStart();
@@ -68,13 +76,22 @@ function OutreachPage() {
       setPlanDate(data.week_start);
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    loadCurrentPlan();
+  }, [user, loadCurrentPlan]);
 
   const generate = async () => {
     if (!user) return;
     setGenerating(true);
     try {
-      const { data: business } = await supabase.from("businesses").select("*").eq("user_id", user.id).single();
+      const { data: business } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
       if (!business) throw new Error("Business profile not found");
 
       const { plan: newPlan } = await generateFn({
@@ -92,15 +109,17 @@ function OutreachPage() {
       });
 
       const week_start = getWeekStart();
-      await supabase.from("outreach_plans").upsert(
-        { user_id: user.id, week_start, strategies: newPlan as any },
-        { onConflict: "user_id,week_start" }
-      );
+      await supabase
+        .from("outreach_plans")
+        .upsert(
+          { user_id: user.id, week_start, strategies: newPlan as Json },
+          { onConflict: "user_id,week_start" },
+        );
       setPlan(newPlan);
       setPlanDate(week_start);
       toast.success("This week's plan is ready!");
-    } catch (e: any) {
-      toast.error(e.message ?? "Couldn't generate plan");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Couldn't generate plan");
     } finally {
       setGenerating(false);
     }
@@ -122,13 +141,25 @@ function OutreachPage() {
         </div>
         <h1 className="mt-5 font-display text-4xl text-ink">Your weekly outreach plan</h1>
         <p className="mt-3 text-muted-foreground">
-          Five concrete moves to grow donors, volunteers, and partnerships — hand-picked for your mission. A fresh plan every week.
+          Five concrete moves to help families discover the Club, visit this week, and get signup
+          support.
         </p>
-        <Button onClick={generate} size="lg" disabled={generating} className="mt-6 rounded-full shadow-warm">
+        <Button
+          onClick={generate}
+          size="lg"
+          disabled={generating}
+          className="mt-6 rounded-full shadow-warm"
+        >
           {generating ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Crafting your plan...</>
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Crafting your plan...
+            </>
           ) : (
-            <><Sparkles className="mr-2 h-4 w-4" />Generate this week's plan</>
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate this week's plan
+            </>
           )}
         </Button>
       </div>
@@ -143,12 +174,18 @@ function OutreachPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wider text-primary">Week of {weekLabel}</p>
+          <p className="text-sm font-medium uppercase tracking-wider text-primary">
+            Week of {weekLabel}
+          </p>
           <h1 className="mt-1 font-display text-4xl text-ink">Your outreach plan</h1>
           <p className="mt-2 max-w-xl text-muted-foreground">{plan.intro}</p>
         </div>
         <Button variant="outline" onClick={generate} disabled={generating} className="rounded-full">
-          {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+          {generating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
           Regenerate
         </Button>
       </div>
@@ -157,7 +194,10 @@ function OutreachPage() {
         {plan.strategies.map((s, i) => {
           const Icon = categoryIcons[s.category] ?? Megaphone;
           return (
-            <article key={i} className="group rounded-3xl border border-border bg-card p-6 shadow-soft transition-all hover:-translate-y-1 hover:shadow-warm">
+            <article
+              key={i}
+              className="group rounded-3xl border border-border bg-card p-6 shadow-soft transition-all hover:-translate-y-1 hover:shadow-warm"
+            >
               <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-warm">
                   <Icon className="h-5 w-5 text-clay" />
