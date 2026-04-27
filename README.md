@@ -1,10 +1,10 @@
 Try our app here: https://outreach-ai-2.lovable.app/dashboard/content
 
-# Bloom
+# Outreach AI
 
 > AI-powered marketing assistant for non-profits, charities, and mission-driven organizations.
 
-Bloom helps small non-profit teams tell their story with heart — generating donor appeals, volunteer call-outs, newsletters, social posts, and weekly outreach strategies in the organization's own voice, without needing a marketing team.
+Outreach AI helps small non-profit teams tell their story with heart — generating donor appeals, volunteer call-outs, newsletters, social posts, and weekly outreach strategies in the organization's own voice, without needing a marketing team.
 
 ---
 
@@ -146,7 +146,7 @@ bun run format       # Prettier format
 
 ## Deployment
 
-Bloom deploys to **Cloudflare Workers** via Wrangler:
+Outreach AI deploys to **Cloudflare Workers** via Wrangler:
 
 ```bash
 bun run build
