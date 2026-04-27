@@ -1,3 +1,5 @@
+Try our app here: https://outreach-ai-2.lovable.app/dashboard/content
+
 # Bloom
 
 > AI-powered marketing assistant for non-profits, charities, and mission-driven organizations.
